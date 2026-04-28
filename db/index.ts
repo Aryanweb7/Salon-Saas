@@ -3,10 +3,10 @@ import { neon } from "@neondatabase/serverless";
 
 import * as schema from "@/db/schema";
 
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = process.env.DATABASE_URL ?? process.env.DATABASE_URL_UNPOOLED;
 
 if (!databaseUrl) {
-  throw new Error("DATABASE_URL is not set.");
+  throw new Error("DATABASE_URL or DATABASE_URL_UNPOOLED is not set.");
 }
 
 const sql = neon(databaseUrl);
