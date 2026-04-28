@@ -43,7 +43,7 @@ export default async function AdminPage() {
     (acc, salon) => {
       const health = calculateClientHealth(
         salon.status,
-        daysSinceDate(new Date(salon.lastLoginDate || ""))
+        daysSinceDate(new Date(salon.lastLogin ?? new Date().toISOString()))
       );
       acc[health]++;
       return acc;
@@ -153,7 +153,7 @@ export default async function AdminPage() {
               <span className="text-sm text-gray-400">Basic</span>
               <span className="text-lg font-semibold text-white">
                 {Math.round(
-                  salons.filter((s) => s.plan === "Basic").length / salons.length * 100
+                  salons.filter((s) => s.plan === "basic").length / salons.length * 100
                 )}%
               </span>
             </div>
@@ -162,7 +162,7 @@ export default async function AdminPage() {
                 className="h-full rounded-full bg-blue-600"
                 style={{
                   width: `${
-                    salons.filter((s) => s.plan === "Basic").length / salons.length * 100
+                    salons.filter((s) => s.plan === "basic").length / salons.length * 100
                   }%`,
                 }}
               />
@@ -172,7 +172,7 @@ export default async function AdminPage() {
               <span className="text-sm text-gray-400">Pro</span>
               <span className="text-lg font-semibold text-white">
                 {Math.round(
-                  salons.filter((s) => s.plan === "Pro").length / salons.length * 100
+                  salons.filter((s) => s.plan === "pro").length / salons.length * 100
                 )}%
               </span>
             </div>
@@ -181,7 +181,7 @@ export default async function AdminPage() {
                 className="h-full rounded-full bg-purple-600"
                 style={{
                   width: `${
-                    salons.filter((s) => s.plan === "Pro").length / salons.length * 100
+                    salons.filter((s) => s.plan === "pro").length / salons.length * 100
                   }%`,
                 }}
               />
@@ -191,7 +191,7 @@ export default async function AdminPage() {
               <span className="text-sm text-gray-400">Premium</span>
               <span className="text-lg font-semibold text-white">
                 {Math.round(
-                  salons.filter((s) => s.plan === "Premium").length / salons.length * 100
+                  salons.filter((s) => s.plan === "premium").length / salons.length * 100
                 )}%
               </span>
             </div>
@@ -200,7 +200,7 @@ export default async function AdminPage() {
                 className="h-full rounded-full bg-amber-600"
                 style={{
                   width: `${
-                    salons.filter((s) => s.plan === "Premium").length / salons.length * 100
+                    salons.filter((s) => s.plan === "premium").length / salons.length * 100
                   }%`,
                 }}
               />
@@ -328,4 +328,3 @@ export default async function AdminPage() {
     </div>
   );
 }
-

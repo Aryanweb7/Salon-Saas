@@ -35,6 +35,8 @@ export interface SessionContext {
   user: { id: string; email: string; name: string } | null;
   role: Role;
   salonId: string | null;
+  salonName: string | null;
+  email: string | null;
   subscriptionStatus: SubscriptionStatus;
   planId: PlanId;
   readOnlyMode: boolean;

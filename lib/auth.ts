@@ -38,6 +38,8 @@ export async function getSessionContext(): Promise<SessionContext> {
         user: { id: user.id, email: user.email, name: user.name },
         role: user.role,
         salonId: null,
+        salonName: null,
+        email: user.email,
         subscriptionStatus: "active",
         planId: "premium",
         readOnlyMode: false,
@@ -49,6 +51,7 @@ export async function getSessionContext(): Promise<SessionContext> {
         status: subscriptions.status,
         planId: subscriptions.planId,
         readOnlyMode: salons.readOnlyMode,
+        salonName: salons.name,
       })
       .from(subscriptions)
       .innerJoin(salons, eq(salons.id, subscriptions.salonId))
@@ -60,6 +63,8 @@ export async function getSessionContext(): Promise<SessionContext> {
       user: { id: user.id, email: user.email, name: user.name },
       role: user.role,
       salonId: user.salonId,
+      salonName: subscription?.salonName ?? null,
+      email: user.email,
       subscriptionStatus: subscription?.status ?? "trial",
       planId: subscription?.planId ?? "basic",
       readOnlyMode: subscription?.readOnlyMode ?? false,

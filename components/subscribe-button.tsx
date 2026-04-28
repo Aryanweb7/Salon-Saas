@@ -58,7 +58,7 @@ export function SubscribeButton({ planId, isLoading = false, className }: Subscr
     try {
       const result = await initiateSubscriptionAction({ planId });
 
-      if (!result.success) {
+      if (!result.success || !result.orderId || !result.amount || !result.salonName || !result.email || !result.planId) {
         toast.error(result.error || "Failed to initiate subscription");
         return;
       }

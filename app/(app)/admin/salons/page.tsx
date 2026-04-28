@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import { Search, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -70,7 +67,7 @@ export default async function AdminSalonsPage() {
                 <TD className="text-gray-400">{salon.owner}</TD>
                 <TD className="text-gray-400">{salon.city}</TD>
                 <TD>
-                  <Badge variant="outline">{salon.plan}</Badge>
+                  <Badge tone="default">{salon.plan}</Badge>
                 </TD>
                 <TD>
                   <Badge
@@ -134,4 +131,3 @@ export default async function AdminSalonsPage() {
     </div>
   );
 }
-
