@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4efe6;
+  --foreground: #1f1a17;
+  --card: rgba(255, 251, 245, 0.84);
+  --card-foreground: #201a17;
+  --muted: #e7dccd;
+  --muted-foreground: #6f6257;
+  --border: rgba(81, 57, 34, 0.12);
+  --primary: #b55d33;
+  --primary-foreground: #fff9f6;
+  --secondary: #1f3b35;
+  --secondary-foreground: #eef7f2;
+  --accent: #f2c66d;
+  --danger: #a63d40;
+  --success: #227c53;
+  --ring: rgba(181, 93, 51, 0.35);
+  --shadow: 0 20px 60px rgba(69, 40, 22, 0.08);
+}
+
+.dark {
+  --background: #161311;
+  --foreground: #f8f0e7;
+  --card: rgba(34, 27, 23, 0.88);
+  --card-foreground: #fbf4ee;
+  --muted: #2b221d;
+  --muted-foreground: #bea997;
+  --border: rgba(255, 240, 226, 0.1);
+  --primary: #e38b5c;
+  --primary-foreground: #20120b;
+  --secondary: #2f5b50;
+  --secondary-foreground: #f1fcf8;
+  --accent: #e9c46a;
+  --danger: #ef6a6f;
+  --success: #5fcf96;
+  --ring: rgba(227, 139, 92, 0.35);
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(242, 198, 109, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(181, 93, 51, 0.12), transparent 30%),
+    linear-gradient(180deg, var(--background), color-mix(in srgb, var(--background) 80%, #000 20%));
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.glass {
+  background: var(--card);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow);
+}
