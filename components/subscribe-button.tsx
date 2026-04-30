@@ -8,13 +8,9 @@ import { toast } from "sonner";
 
 interface RazorpayOptions {
   key: string;
-  amount: number;
-  currency: string;
+  subscription_id: string;
   name: string;
   description: string;
-  order_id: string;
-  customer_notify: number;
-  notes: Record<string, string>;
   prefill: {
     name: string;
     email: string;
@@ -22,7 +18,7 @@ interface RazorpayOptions {
   theme: {
     color: string;
   };
-  handler?: (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => void;
+  handler?: (response: { razorpay_payment_id: string; razorpay_subscription_id: string; razorpay_signature: string }) => void;
 }
 
 declare global {
@@ -58,23 +54,16 @@ export function SubscribeButton({ planId, isLoading = false, className }: Subscr
     try {
       const result = await initiateSubscriptionAction({ planId });
 
-      if (!result.success || !result.orderId || !result.amount || !result.salonName || !result.email || !result.planId) {
+      if (!result.success || !result.subscriptionId || !result.salonName || !result.email || !result.planId) {
         toast.error(result.error || "Failed to initiate subscription");
         return;
       }
 
       const options: RazorpayOptions = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
-        amount: result.amount,
-        currency: "INR",
+        subscription_id: result.subscriptionId,
         name: "SalonFlow",
         description: `Subscribe to ${planId.toUpperCase()} plan`,
-        order_id: result.orderId,
-        customer_notify: 1,
-        notes: {
-          salonId: result.salonName,
-          planId: result.planId,
-        },
         prefill: {
           name: result.salonName,
           email: result.email,
@@ -85,7 +74,7 @@ export function SubscribeButton({ planId, isLoading = false, className }: Subscr
         handler: async (response) => {
           try {
             const verifyResult = await verifySubscriptionPaymentAction({
-              orderId: result.orderId,
+              subscriptionId: response.razorpay_subscription_id,
               paymentId: response.razorpay_payment_id,
               signature: response.razorpay_signature,
             });

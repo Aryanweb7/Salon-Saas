@@ -1,14 +1,18 @@
 import { checkPlanLimit, requireFeature } from "@/lib/gating";
 import { getSessionContext } from "@/lib/auth";
 
-export async function assertCanMutateCustomers() {
+export async function assertCanMutateWorkspace() {
   const session = await getSessionContext();
 
   if (session.readOnlyMode) {
-    return { allowed: false, message: "Workspace is in read-only mode because billing is overdue." };
+    return { allowed: false, message: "Workspace is in read-only mode because billing is overdue.", session };
   }
 
   return { allowed: true, message: null, session };
+}
+
+export async function assertCanMutateCustomers() {
+  return assertCanMutateWorkspace();
 }
 
 export async function assertCanSendCampaign() {

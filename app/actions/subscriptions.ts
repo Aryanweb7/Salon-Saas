@@ -2,8 +2,9 @@
 
 import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
-import { createOrder, updateSubscriptionFromRazorpay } from "@/lib/db/subscriptions";
+import { cancelCurrentSubscription, createSubscriptionRecord, updateSubscriptionFromRazorpay } from "@/lib/db/subscriptions";
 import { PLAN_DEFINITIONS } from "@/lib/plans";
+import { getPlanSubscriptionPayload, getRazorpayClient, verifyRazorpayPaymentSignature } from "@/lib/razorpay";
 
 const subscribeSchema = z.object({
   planId: z.enum(["basic", "pro", "premium"]),
@@ -23,23 +24,34 @@ export async function initiateSubscriptionAction(data: SubscribeFormData) {
   }
 
   const validated = subscribeSchema.parse(data);
-  const plan = PLAN_DEFINITIONS[validated.planId];
-
   try {
-    // Create order in database
-    const order = await createOrder(session.salonId, {
-      planId: validated.planId,
-      amount: String(plan.price * 100), // Convert to paise
+    const razorpay = getRazorpayClient();
+    const planConfig = getPlanSubscriptionPayload(validated.planId);
+    const razorpaySubscription = await razorpay.subscriptions.create({
+      plan_id: planConfig.planId,
+      total_count: 12,
+      quantity: 1,
+      customer_notify: 1,
+      notes: {
+        salonId: session.salonId,
+        salonName: session.salonName,
+        planId: validated.planId,
+      },
     });
 
-    if (!order) {
-      return { success: false, error: "Failed to create order" };
+    const subscription = await createSubscriptionRecord(session.salonId, {
+      planId: validated.planId,
+      amount: planConfig.amount,
+      razorpaySubscriptionId: razorpaySubscription.id,
+    });
+
+    if (!subscription) {
+      return { success: false, error: "Failed to create subscription" };
     }
 
     return {
       success: true,
-      orderId: order.id,
-      amount: plan.price * 100, // Amount in paise for Razorpay
+      subscriptionId: razorpaySubscription.id,
       salonName: session.salonName,
       email: session.email,
       planId: validated.planId,
@@ -50,7 +62,7 @@ export async function initiateSubscriptionAction(data: SubscribeFormData) {
 }
 
 export async function verifySubscriptionPaymentAction(params: {
-  orderId: string;
+  subscriptionId: string;
   paymentId: string;
   signature: string;
 }) {
@@ -61,11 +73,19 @@ export async function verifySubscriptionPaymentAction(params: {
   }
 
   try {
-    // Verify signature on client has already been done
-    // Here we just update the subscription status
+    const isValid = verifyRazorpayPaymentSignature({
+      subscriptionId: params.subscriptionId,
+      paymentId: params.paymentId,
+      signature: params.signature,
+    });
+
+    if (!isValid) {
+      return { success: false, error: "Invalid payment signature" };
+    }
+
     const result = await updateSubscriptionFromRazorpay({
       salonId: session.salonId,
-      orderId: params.orderId,
+      razorpaySubscriptionId: params.subscriptionId,
       razorpayPaymentId: params.paymentId,
       status: "active",
     });
@@ -77,5 +97,37 @@ export async function verifySubscriptionPaymentAction(params: {
     return { success: false, error: "Failed to activate subscription" };
   } catch (error) {
     return { success: false, error: "Failed to verify payment" };
+  }
+}
+
+export async function cancelSubscriptionAction() {
+  const session = await getSessionContext();
+
+  if (!session.salonId) {
+    return { success: false, error: "Salon not found" };
+  }
+
+  try {
+    const result = await cancelCurrentSubscription(session.salonId);
+
+    if (!result.success) {
+      return { success: false, error: "No active subscription found" };
+    }
+
+    if (result.razorpaySubscriptionId) {
+      try {
+        const razorpay = getRazorpayClient();
+        await razorpay.subscriptions.cancel(result.razorpaySubscriptionId, true);
+      } catch {
+        return {
+          success: true,
+          warning: "Subscription was canceled locally, but remote Razorpay cancellation could not be confirmed.",
+        };
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: "Failed to cancel subscription" };
   }
 }

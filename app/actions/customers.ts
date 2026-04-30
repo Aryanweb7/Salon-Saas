@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
+import { assertCanMutateCustomers } from "@/lib/permissions";
 import {
   createCustomer,
   updateCustomer,
@@ -22,7 +23,13 @@ const customerSchema = z.object({
 export type CustomerFormData = z.infer<typeof customerSchema>;
 
 export async function createCustomerAction(data: CustomerFormData) {
-  const session = await getSessionContext();
+  const permission = await assertCanMutateCustomers();
+
+  if (!permission.allowed) {
+    return { success: false, error: permission.message ?? "Action blocked" };
+  }
+
+  const session = permission.session ?? (await getSessionContext());
 
   if (!session.salonId) {
     return { success: false, error: "Salon not found" };
@@ -51,7 +58,13 @@ export async function updateCustomerAction(
   customerId: string,
   data: CustomerFormData
 ) {
-  const session = await getSessionContext();
+  const permission = await assertCanMutateCustomers();
+
+  if (!permission.allowed) {
+    return { success: false, error: permission.message ?? "Action blocked" };
+  }
+
+  const session = permission.session ?? (await getSessionContext());
 
   if (!session.salonId) {
     return { success: false, error: "Salon not found" };
@@ -77,7 +90,13 @@ export async function updateCustomerAction(
 }
 
 export async function deleteCustomerAction(customerId: string) {
-  const session = await getSessionContext();
+  const permission = await assertCanMutateCustomers();
+
+  if (!permission.allowed) {
+    return { success: false, error: permission.message ?? "Action blocked" };
+  }
+
+  const session = permission.session ?? (await getSessionContext());
 
   if (!session.salonId) {
     return { success: false, error: "Salon not found" };

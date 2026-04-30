@@ -1,9 +1,40 @@
 import crypto from "node:crypto";
+import Razorpay from "razorpay";
 
 export function verifyRazorpaySignature(payload: string, signature: string) {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET ?? "demo-webhook-secret";
   const expected = crypto.createHmac("sha256", secret).update(payload).digest("hex");
   return expected === signature;
+}
+
+export function verifyRazorpayPaymentSignature(params: {
+  subscriptionId: string;
+  paymentId: string;
+  signature: string;
+}) {
+  const secret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!secret) {
+    return false;
+  }
+
+  const body = `${params.paymentId}|${params.subscriptionId}`;
+  const expected = crypto.createHmac("sha256", secret).update(body).digest("hex");
+  return expected === params.signature;
+}
+
+export function getRazorpayClient() {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    throw new Error("Missing Razorpay credentials");
+  }
+
+  return new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret,
+  });
 }
 
 export function getPlanSubscriptionPayload(planId: "basic" | "pro" | "premium") {
@@ -16,13 +47,9 @@ export function getPlanSubscriptionPayload(planId: "basic" | "pro" | "premium") 
 
 export interface RazorpayCheckoutOptions {
   key: string;
-  amount: number;
-  currency: string;
+  subscription_id: string;
   name: string;
   description: string;
-  order_id: string;
-  customer_notify: number;
-  notes: Record<string, string>;
   prefill: {
     name: string;
     email: string;
@@ -33,24 +60,15 @@ export interface RazorpayCheckoutOptions {
 }
 
 export function createCheckoutOptions(params: {
-  orderId: string;
-  amount: number;
+  subscriptionId: string;
   salonName: string;
   email: string;
-  planId: string;
 }): RazorpayCheckoutOptions {
   return {
     key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
-    amount: params.amount,
-    currency: "INR",
+    subscription_id: params.subscriptionId,
     name: "SalonFlow",
     description: `Subscribe to ${params.salonName}`,
-    order_id: params.orderId,
-    customer_notify: 1,
-    notes: {
-      salonId: params.salonName,
-      planId: params.planId,
-    },
     prefill: {
       name: params.salonName,
       email: params.email,
@@ -60,4 +78,3 @@ export function createCheckoutOptions(params: {
     },
   };
 }
-

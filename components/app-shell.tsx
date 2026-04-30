@@ -22,6 +22,7 @@ import { Card } from "@/components/ui/card";
 import { getSessionContext } from "@/lib/auth";
 import { getAdminOverview } from "@/lib/db/salons";
 import { formatCurrencyValue } from "@/lib/admin-utils";
+import { getReadOnlyReason } from "@/lib/gating";
 
 const ownerNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -57,6 +58,8 @@ export async function AppShell({
   if (isAdmin) {
     adminMetrics = await getAdminOverview();
   }
+
+  const readOnlyReason = session.readOnlyMode ? getReadOnlyReason(session.subscriptionStatus) : null;
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
@@ -160,7 +163,22 @@ export async function AppShell({
         </Card>
       </aside>
 
-      <main className={`p-4 md:p-8 ${isAdmin ? "bg-gray-950" : ""}`}>{children}</main>
+      <main className={`p-4 md:p-8 ${isAdmin ? "bg-gray-950" : ""}`}>
+        {readOnlyReason ? (
+          <Card className="mb-6 border-[var(--danger)]/30 bg-[color-mix(in_srgb,var(--danger)_12%,transparent)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--danger)]">
+                  Read-only mode
+                </p>
+                <p className="mt-2 text-sm text-[var(--muted-foreground)]">{readOnlyReason}</p>
+              </div>
+              <Badge tone="danger">{session.subscriptionStatus.replace("_", " ")}</Badge>
+            </div>
+          </Card>
+        ) : null}
+        {children}
+      </main>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { createVisit, getVisitsByCustomer } from "@/lib/db/visits";
 import { listVisitsForSalon } from "@/lib/db/reports";
+import { assertCanMutateWorkspace } from "@/lib/permissions";
 
 const visitSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
@@ -18,7 +19,13 @@ const visitSchema = z.object({
 export type VisitFormData = z.infer<typeof visitSchema>;
 
 export async function createVisitAction(data: VisitFormData) {
-  const session = await getSessionContext();
+  const permission = await assertCanMutateWorkspace();
+
+  if (!permission.allowed) {
+    return { success: false, error: permission.message ?? "Action blocked" };
+  }
+
+  const session = permission.session ?? (await getSessionContext());
 
   if (!session.salonId) {
     return { success: false, error: "Salon not found" };
