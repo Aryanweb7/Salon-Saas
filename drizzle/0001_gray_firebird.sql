@@ -2,7 +2,7 @@ CREATE TYPE "public"."appointment_status" AS ENUM('pending', 'confirmed', 'check
 CREATE TYPE "public"."message_status" AS ENUM('queued', 'sent', 'failed');--> statement-breakpoint
 CREATE TYPE "public"."payment_status" AS ENUM('created', 'paid', 'failed', 'refunded');--> statement-breakpoint
 CREATE TYPE "public"."plan_id" AS ENUM('basic', 'pro', 'premium');--> statement-breakpoint
-CREATE TYPE "public"."role" AS ENUM('SUPER_ADMIN', 'SALON_OWNER', 'STAFF_MEMBER', 'RECEPTIONIST');--> statement-breakpoint
+CREATE TYPE "public"."role" AS ENUM('SALON_OWNER', 'STAFF_MEMBER', 'RECEPTIONIST');--> statement-breakpoint
 CREATE TYPE "public"."subscription_status" AS ENUM('trial', 'active', 'past_due', 'overdue', 'expired', 'canceled', 'paused');--> statement-breakpoint
 CREATE TYPE "public"."support_priority" AS ENUM('low', 'medium', 'high');--> statement-breakpoint
 CREATE TABLE "appointments" (

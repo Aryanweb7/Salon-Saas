@@ -144,6 +144,9 @@ export async function getCustomerStats(salonId: string) {
       .select({
         totalCustomers: sql<number>`count(*)`,
         returningCustomers: sql<number>`coalesce(round((count(*) filter (where ${customers.lastVisitAt} is not null) * 100.0) / nullif(count(*), 0)), 0)`,
+        currentMonthCustomers: sql<number>`count(*) filter (where date_trunc('month', ${customers.createdAt}) = date_trunc('month', now()))`,
+        previousMonthCustomers: sql<number>`count(*) filter (where date_trunc('month', ${customers.createdAt}) = date_trunc('month', now()) - interval '1 month')`,
+        previousReturningCustomers: sql<number>`coalesce(round((count(*) filter (where ${customers.lastVisitAt} is not null and ${customers.createdAt} < date_trunc('month', now())) * 100.0) / nullif(count(*) filter (where ${customers.createdAt} < date_trunc('month', now())), 0)), 0)`,
       })
       .from(customers)
       .where(eq(customers.salonId, salonId));
@@ -151,20 +154,55 @@ export async function getCustomerStats(salonId: string) {
     const [revenue] = await db
       .select({
         monthRevenue: sql<number>`coalesce(sum(${visits.amount}) filter (where date_trunc('month', ${visits.visitedAt}) = date_trunc('month', now())), 0)`,
+        previousMonthRevenue: sql<number>`coalesce(sum(${visits.amount}) filter (where date_trunc('month', ${visits.visitedAt}) = date_trunc('month', now()) - interval '1 month'), 0)`,
       })
       .from(visits)
       .where(eq(visits.salonId, salonId));
 
+    const currentMonthCustomers = Number(stats?.currentMonthCustomers ?? 0);
+    const previousMonthCustomers = Number(stats?.previousMonthCustomers ?? 0);
+    const monthRevenue = Number(revenue?.monthRevenue ?? 0);
+    const previousMonthRevenue = Number(revenue?.previousMonthRevenue ?? 0);
+    const returningCustomers = Number(stats?.returningCustomers ?? 0);
+    const previousReturningCustomers = Number(stats?.previousReturningCustomers ?? 0);
+
     return {
       totalCustomers: Number(stats?.totalCustomers ?? 0),
-      returningCustomers: Number(stats?.returningCustomers ?? 0),
-      monthRevenue: Number(revenue?.monthRevenue ?? 0),
+      returningCustomers,
+      monthRevenue,
+      customerTrend: formatCountDelta(currentMonthCustomers, previousMonthCustomers, "vs last month"),
+      revenueTrend: formatPercentDelta(monthRevenue, previousMonthRevenue, "vs last month"),
+      returningTrend: formatPointDelta(returningCustomers - previousReturningCustomers, "vs last month"),
     };
   } catch {
     return {
       totalCustomers: fallbackOwnerStats.totalCustomers,
       returningCustomers: fallbackOwnerStats.returningCustomers,
       monthRevenue: fallbackOwnerStats.monthRevenue,
+      customerTrend: "0 vs last month",
+      revenueTrend: "0% vs last month",
+      returningTrend: "0 pts vs last month",
     };
   }
+}
+
+function formatCountDelta(current: number, previous: number, suffix: string) {
+  const delta = current - previous;
+  const sign = delta > 0 ? "+" : "";
+  return `${sign}${delta} ${suffix}`;
+}
+
+function formatPercentDelta(current: number, previous: number, suffix: string) {
+  if (previous === 0) {
+    return current > 0 ? "+100% vs last month" : `0% ${suffix}`;
+  }
+
+  const delta = Math.round(((current - previous) / previous) * 100);
+  const sign = delta > 0 ? "+" : "";
+  return `${sign}${delta}% ${suffix}`;
+}
+
+function formatPointDelta(delta: number, suffix: string) {
+  const sign = delta > 0 ? "+" : "";
+  return `${sign}${delta} pts ${suffix}`;
 }

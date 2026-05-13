@@ -1,4 +1,4 @@
-export type Role = "SUPER_ADMIN" | "SALON_OWNER" | "STAFF_MEMBER" | "RECEPTIONIST";
+export type Role = "SALON_OWNER" | "STAFF_MEMBER" | "RECEPTIONIST";
 export type PlanId = "basic" | "pro" | "premium";
 export type SubscriptionStatus =
   | "trial"

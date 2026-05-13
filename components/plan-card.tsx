@@ -24,8 +24,15 @@ export function PlanCard({ planId }: { planId: keyof typeof PLAN_DEFINITIONS }) 
           <li key={feature} className="flex gap-3"><Check className="mt-0.5 h-4 w-4 text-[var(--success)]" /> {feature}</li>
         ))}
       </ul>
-      <SubscribeButton planId={planId} className="mt-auto" />
+      <div className="mt-auto space-y-3">
+        <SubscribeButton planId={planId} className="w-full" />
+        {planId === "pro" ? (
+          <p className="text-xs leading-5 text-[var(--muted-foreground)]">
+            No payment will be charged today. Billing starts automatically after your 14-day free trial.
+            Cancel anytime before trial ends. Card authorization may be required and the subscription auto-renews monthly.
+          </p>
+        ) : null}
+      </div>
     </Card>
   );
 }
-

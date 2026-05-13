@@ -41,8 +41,7 @@ async function main() {
   await sql`
     insert into users (id, clerk_user_id, salon_id, email, name, role)
     values
-      ('00000000-0000-0000-0000-000000000002', 'clerk_seed_owner', '11111111-1111-1111-1111-111111111111', 'owner@glowstudio.in', 'Ananya Kapoor', 'SALON_OWNER'),
-      ('00000000-0000-0000-0000-000000000001', 'clerk_seed_admin', null, 'owner@salonflow.in', 'Platform Owner', 'SUPER_ADMIN')
+      ('00000000-0000-0000-0000-000000000002', 'clerk_seed_owner', '11111111-1111-1111-1111-111111111111', 'owner@glowstudio.in', 'Ananya Kapoor', 'SALON_OWNER')
     on conflict (id) do nothing
   `;
 

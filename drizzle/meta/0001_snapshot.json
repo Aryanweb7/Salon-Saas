@@ -1,6 +1,6 @@
 {
-  "id": "b9378d37-de9d-4288-9e59-cfe21b379698",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "bc37c880-eeac-4ba6-9597-e7ce26e9eea0",
+  "prevId": "b9378d37-de9d-4288-9e59-cfe21b379698",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1661,6 +1661,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "salon_id": {
           "name": "salon_id",
           "type": "uuid",
@@ -2000,9 +2006,7 @@
     "public.role": {
       "name": "role",
       "schema": "public",
-      "values": [
-        "SUPER_ADMIN",
-        "SALON_OWNER",
+      "values": [        "SALON_OWNER",
         "STAFF_MEMBER",
         "RECEPTIONIST"
       ]

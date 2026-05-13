@@ -1,30 +1,39 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-const isPublicRoute = createRouteMatcher(["/", "/pricing", "/sign-in(.*)", "/sign-up(.*)", "/login(.*)", "/register(.*)"]);
-const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/customers(.*)", "/appointments(.*)", "/visits(.*)", "/staff(.*)", "/reports(.*)", "/billing(.*)", "/settings(.*)", "/admin(.*)"]);
+const PUBLIC_PATHS = ["/", "/pricing", "/sign-in", "/sign-up", "/login", "/register", "/forgot-password", "/reset-password"];
+const PUBLIC_PREFIXES = ["/_next", "/api/health", "/api/webhooks/razorpay", "/api/cron"];
+const AUTH_API_PREFIXES = ["/api/auth", "/api/login"];
+const PROTECTED_PATHS = ["/dashboard", "/customers", "/appointments", "/visits", "/staff", "/reports", "/billing", "/settings"];
 
-export default clerkMiddleware(async (auth, request) => {
-  if (!isProtectedRoute(request) || isPublicRoute(request)) {
+function isPublicRoute(pathname: string) {
+  return (
+    PUBLIC_PATHS.includes(pathname) ||
+    PUBLIC_PATHS.some((path) => pathname.startsWith(`${path}/`)) ||
+    PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+  );
+}
+
+function isProtectedRoute(pathname: string) {
+  return PROTECTED_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+export default async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (isPublicRoute(pathname) || AUTH_API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
     return NextResponse.next();
   }
 
-  await auth.protect();
+  if (!isProtectedRoute(pathname)) {
+    return NextResponse.next();
+  }
 
-  if (isAdminRoute(request)) {
-    const { sessionClaims } = await auth();
-    const metadata = sessionClaims?.metadata;
-    const role = metadata && typeof metadata === "object" && "role" in metadata ? (metadata as { role?: string }).role : undefined;
-
-    if (role !== "SUPER_ADMIN") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET });
+  if (!token) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
-});
-
-export const config = {
-  matcher: ["/((?!_next|.*\\..*).*)", "/"],
-};
+}

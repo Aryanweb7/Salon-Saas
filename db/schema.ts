@@ -19,13 +19,12 @@ const timestamps = {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 };
 
-export const roleEnum = pgEnum("role", ["SUPER_ADMIN", "SALON_OWNER", "STAFF_MEMBER", "RECEPTIONIST"]);
+export const roleEnum = pgEnum("role", ["SALON_OWNER", "STAFF_MEMBER", "RECEPTIONIST"]);
 export const planEnum = pgEnum("plan_id", ["basic", "pro", "premium"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", ["trial", "active", "past_due", "overdue", "expired", "canceled", "paused"]);
 export const paymentStatusEnum = pgEnum("payment_status", ["created", "paid", "failed", "refunded"]);
 export const appointmentStatusEnum = pgEnum("appointment_status", ["pending", "confirmed", "checked_in", "completed", "cancelled", "no_show"]);
 export const messageStatusEnum = pgEnum("message_status", ["queued", "sent", "failed"]);
-export const supportPriorityEnum = pgEnum("support_priority", ["low", "medium", "high"]);
 
 export const salons = pgTable(
   "salons",
@@ -54,6 +53,7 @@ export const users = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     clerkUserId: varchar("clerk_user_id", { length: 255 }).notNull(),
+    passwordHash: varchar("password_hash", { length: 255 }),
     salonId: uuid("salon_id").references(() => salons.id, { onDelete: "set null" }),
     branchId: uuid("branch_id"),
     email: varchar("email", { length: 255 }).notNull(),
@@ -67,6 +67,22 @@ export const users = pgTable(
     clerkIdx: uniqueIndex("users_clerk_user_id_idx").on(table.clerkUserId),
     emailIdx: uniqueIndex("users_email_idx").on(table.email),
     salonRoleIdx: index("users_salon_role_idx").on(table.salonId, table.role),
+  }),
+);
+
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: varchar("token_hash", { length: 255 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => ({
+    tokenIdx: uniqueIndex("password_reset_tokens_token_idx").on(table.tokenHash),
+    userIdx: index("password_reset_tokens_user_idx").on(table.userId),
   }),
 );
 
@@ -93,6 +109,8 @@ export const subscriptions = pgTable(
     planId: planEnum("plan_id").notNull(),
     status: subscriptionStatusEnum("status").default("trial").notNull(),
     razorpaySubscriptionId: varchar("razorpay_subscription_id", { length: 255 }),
+    trialStartDate: timestamp("trial_start_date", { withTimezone: true }),
+    trialEndDate: timestamp("trial_end_date", { withTimezone: true }),
     currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
     currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
     graceEndsAt: timestamp("grace_ends_at", { withTimezone: true }),
@@ -262,39 +280,6 @@ export const messages = pgTable(
   }),
 );
 
-export const supportTickets = pgTable(
-  "support_tickets",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    salonId: uuid("salon_id").references(() => salons.id, { onDelete: "set null" }),
-    subject: varchar("subject", { length: 200 }).notNull(),
-    priority: supportPriorityEnum("priority").default("low").notNull(),
-    status: varchar("status", { length: 40 }).default("open").notNull(),
-    requesterName: varchar("requester_name", { length: 160 }),
-    ...timestamps,
-  },
-  (table) => ({
-    priorityIdx: index("support_tickets_priority_idx").on(table.priority),
-  }),
-);
-
-export const auditLogs = pgTable(
-  "audit_logs",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    salonId: uuid("salon_id").references(() => salons.id, { onDelete: "set null" }),
-    actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
-    action: varchar("action", { length: 200 }).notNull(),
-    entityType: varchar("entity_type", { length: 120 }).notNull(),
-    entityId: uuid("entity_id"),
-    metadata: jsonb("metadata").$type<Record<string, unknown>>().default(sql`'{}'::jsonb`).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => ({
-    salonIdx: index("audit_logs_salon_idx").on(table.salonId),
-  }),
-);
-
 export const settings = pgTable(
   "settings",
   {
@@ -322,6 +307,5 @@ export const salonRelations = relations(salons, ({ many, one }) => ({
   staff: many(staff),
   reminders: many(reminders),
   messages: many(messages),
-  tickets: many(supportTickets),
   settings: one(settings),
 }));

@@ -10,14 +10,14 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="outline" disabled>
+      <Button className="h-10 px-4" variant="outline" disabled>
         Theme
       </Button>
     );
   }
 
   return (
-    <Button variant="outline" onClick={toggleTheme}>
+    <Button className="h-10 px-4" variant="outline" onClick={toggleTheme}>
       {theme === "light" ? <Moon className="mr-2 h-4 w-4" /> : <SunMedium className="mr-2 h-4 w-4" />}
       {theme === "light" ? "Dark" : "Light"}
     </Button>

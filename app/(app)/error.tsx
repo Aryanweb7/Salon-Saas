@@ -19,7 +19,7 @@ export default function AppError({
   return (
     <Card className="mx-auto mt-10 max-w-xl space-y-4 p-6">
       <h1 className="text-2xl font-semibold">Something went wrong</h1>
-      <p className="text-sm text-[var(--muted-foreground)]">The workspace could not load. Try again, and if the issue persists check your Neon and Clerk configuration.</p>
+      <p className="text-sm text-[var(--muted-foreground)]">The workspace could not load. Try again, and if the issue persists check your Neon and Auth.js configuration.</p>
       <Button onClick={reset}>Try again</Button>
     </Card>
   );

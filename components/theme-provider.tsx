@@ -10,16 +10,40 @@ const ThemeContext = createContext({
   toggleTheme: () => {},
 });
 
+function getInitialTheme(): Theme {
+  if (typeof window === "undefined") return "light";
+  // Check if theme was already set by inline script
+  const saved = window.localStorage.getItem("salonflow-theme") as Theme | null;
+  if (saved) return saved;
+  // Check system preference
+  if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+  return "light";
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem("salonflow-theme") as Theme | null;
-    const preferred = savedTheme ?? "light";
-    setTheme(preferred);
-    document.documentElement.classList.toggle("dark", preferred === "dark");
+    const initial = getInitialTheme();
+    setTheme(initial);
+    // Ensure class matches (in case script didn't run)
+    document.documentElement.classList.toggle("dark", initial === "dark");
     setMounted(true);
+
+    // Listen for system preference changes
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => {
+      const saved = window.localStorage.getItem("salonflow-theme");
+      // Only auto-switch if user hasn't manually set a preference
+      if (!saved) {
+        const newTheme = e.matches ? "dark" : "light";
+        setTheme(newTheme);
+        document.documentElement.classList.toggle("dark", newTheme === "dark");
+      }
+    };
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
   }, []);
 
   const toggleTheme = () => {

@@ -7,18 +7,20 @@ import { getSessionContext } from "@/lib/auth";
 import { getAppointmentSeries, getDashboardAppointmentStats, listAppointmentsForSalon } from "@/lib/db/appointments";
 import { getCustomerStats } from "@/lib/db/customers";
 import { getRevenueSeries, listStaffReport } from "@/lib/db/reports";
+import { getStaffDashboardStats } from "@/lib/db/staff";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const session = await getSessionContext();
   const salonId = session.salonId ?? "";
-  const [customerStats, appointmentStats, revenueSeries, appointmentSeries, appointments, staff] = await Promise.all([
+  const [customerStats, appointmentStats, revenueSeries, appointmentSeries, appointments, staff, staffStats] = await Promise.all([
     getCustomerStats(salonId),
     getDashboardAppointmentStats(salonId),
     getRevenueSeries(salonId),
     getAppointmentSeries(salonId),
     listAppointmentsForSalon(salonId),
     listStaffReport(salonId),
+    getStaffDashboardStats(salonId),
   ]);
 
   return (
@@ -32,12 +34,12 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <MetricCard label="Total customers" value={customerStats.totalCustomers.toString()} trend="+12% vs last month" />
-        <MetricCard label="Today appointments" value={appointmentStats.todayAppointments.toString()} trend="+4 walk-ins" />
-        <MetricCard label="This month revenue" value={formatCurrency(customerStats.monthRevenue)} trend="+18% growth" />
-        <MetricCard label="Pending reminders" value={appointmentStats.pendingReminders.toString()} trend="92% delivery rate" />
-        <MetricCard label="Staff count" value={staff.length.toString()} trend="1 new joiner" />
-        <MetricCard label="Returning customers" value={formatPercent(customerStats.returningCustomers)} trend="+6 pts" />
+        <MetricCard label="Total customers" value={customerStats.totalCustomers.toString()} trend={customerStats.customerTrend} />
+        <MetricCard label="Today appointments" value={appointmentStats.todayAppointments.toString()} trend={appointmentStats.appointmentTrend} />
+        <MetricCard label="This month revenue" value={formatCurrency(customerStats.monthRevenue)} trend={customerStats.revenueTrend} />
+        <MetricCard label="Pending reminders" value={appointmentStats.pendingReminders.toString()} trend={appointmentStats.reminderTrend} />
+        <MetricCard label="Staff count" value={staffStats.totalStaff.toString()} trend={staffStats.staffTrend} />
+        <MetricCard label="Returning customers" value={formatPercent(customerStats.returningCustomers)} trend={customerStats.returningTrend} />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
@@ -78,7 +80,7 @@ export default async function DashboardPage() {
         <Card className="space-y-4">
           <div>
             <CardTitle>Reminder queue</CardTitle>
-            <CardDescription>WhatsApp automation logs with provider abstraction support.</CardDescription>
+            <CardDescription>WhatsApp automation logs for scheduled customer messages.</CardDescription>
           </div>
           <div className="space-y-3">
             {appointmentStats.reminders.map((reminder) => (
@@ -87,7 +89,7 @@ export default async function DashboardPage() {
                   <p className="font-medium">{reminder.template}</p>
                   <Badge tone={reminder.status === "Sent" ? "success" : reminder.status === "Failed" ? "danger" : "warning"}>{reminder.status}</Badge>
                 </div>
-                <p className="mt-1 text-sm text-[var(--muted-foreground)]">{reminder.provider} - {reminder.scheduledFor}</p>
+                <p className="mt-1 text-sm text-[var(--muted-foreground)]">{reminder.scheduledFor}</p>
               </div>
             ))}
           </div>

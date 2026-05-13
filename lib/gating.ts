@@ -11,7 +11,6 @@ export function getReadOnlyReason(status: SubscriptionStatus) {
   if (status === "overdue") return "Your account is overdue after the 3-day grace period and is now in read-only mode.";
   if (status === "expired") return "Your subscription has expired. Renew to restore editing and automations.";
   if (status === "canceled") return "This subscription is canceled. Reactivate to resume operations.";
-  if (status === "paused") return "This workspace is paused. Resume billing to edit data again.";
   return null;
 }
 

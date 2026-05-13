@@ -1,5 +1,7 @@
 export type WhatsAppProvider = "twilio" | "interakt" | "wati";
 
+export const WHATSAPP_PROVIDER: WhatsAppProvider = "twilio";
+
 export interface MessagePayload {
   to: string;
   templateKey: string;

@@ -4,8 +4,62 @@ import { db } from "@/db";
 import { staff, visits } from "@/db/schema";
 import { fallbackRevenueSeries, fallbackStaff } from "@/lib/fallback-data";
 
-export async function getRevenueSeries(_salonId: string) {
-  return fallbackRevenueSeries;
+function getLastSixMonths() {
+  const formatter = new Intl.DateTimeFormat("en-IN", { month: "short" });
+  const current = new Date();
+  current.setDate(1);
+  current.setHours(0, 0, 0, 0);
+
+  return Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(current);
+    date.setMonth(current.getMonth() - (5 - index));
+
+    return {
+      key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+      name: formatter.format(date),
+      revenue: 0,
+      visits: 0,
+    };
+  });
+}
+
+export async function getRevenueSeries(salonId: string) {
+  if (!salonId) {
+    return getLastSixMonths();
+  }
+
+  const monthKey = sql<string>`to_char(date_trunc('month', ${visits.visitedAt}), 'YYYY-MM')`;
+
+  try {
+    const rows = await db
+      .select({
+        month: monthKey,
+        revenue: sql<string>`coalesce(sum(${visits.amount}), 0)`,
+        visitCount: sql<number>`count(*)`,
+      })
+      .from(visits)
+      .where(sql`${visits.salonId} = ${salonId} and ${visits.visitedAt} >= date_trunc('month', now()) - interval '5 months'`)
+      .groupBy(monthKey)
+      .orderBy(monthKey);
+
+    const byMonth = new Map(
+      rows.map((row) => [
+        row.month,
+        {
+          revenue: Number(row.revenue ?? 0),
+          visits: Number(row.visitCount ?? 0),
+        },
+      ]),
+    );
+
+    return getLastSixMonths().map((month) => ({
+      ...month,
+      revenue: byMonth.get(month.key)?.revenue ?? 0,
+      visits: byMonth.get(month.key)?.visits ?? 0,
+    }));
+  } catch {
+    return fallbackRevenueSeries;
+  }
 }
 
 export async function listStaffReport(salonId: string) {

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { queueBirthdayReminders } from "@/lib/db/reminders";
 import { assertCanMutateCustomers, assertCanSendCampaign } from "@/lib/permissions";
 
 export async function createCustomerAction() {
@@ -34,10 +35,12 @@ export async function sendBirthdayCampaignAction() {
     };
   }
 
+  const queued = await queueBirthdayReminders();
+
   revalidatePath("/dashboard");
   return {
     success: true,
     allowed: true,
-    message: "Birthday campaign queued successfully.",
+    message: queued ? `${queued} birthday reminder(s) queued successfully.` : "No birthday reminders were due today.",
   };
 }

@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
 
-import { getCurrentSalonId } from "@/lib/auth";
-import { sendWhatsAppMessage } from "@/lib/messaging";
+import { getSessionContext } from "@/lib/auth";
+import { dispatchQueuedReminders } from "@/lib/db/reminders";
+import { assertCanSendCampaign } from "@/lib/permissions";
 
 export async function POST() {
-  const salonId = await getCurrentSalonId();
-  const result = await sendWhatsAppMessage("twilio", {
-    to: "+919999999999",
-    templateKey: "appointment-reminder",
-    variables: {
-      customer_name: "Rahul",
-      time: "5 PM",
-    },
-  });
+  const permission = await assertCanSendCampaign();
+  if (!permission.allowed) {
+    return NextResponse.json({ error: permission.message ?? "Reminders are blocked" }, { status: 403 });
+  }
 
-  return NextResponse.json({ salonId, ...result });
+  const session = permission.session ?? (await getSessionContext());
+  const result = await dispatchQueuedReminders();
+
+  return NextResponse.json({ salonId: session.salonId, ...result });
 }

@@ -18,6 +18,7 @@ interface CustomerModalProps {
   initialData?: Partial<CustomerFormData>;
   title?: string;
   description?: string;
+  onSuccess?: () => void | Promise<void>;
 }
 
 export function CustomerModal({
@@ -26,6 +27,7 @@ export function CustomerModal({
   initialData,
   title = "Add Customer",
   description = "Add a new customer to your CRM",
+  onSuccess,
 }: CustomerModalProps) {
   const [open, setOpen] = useState(false);
 
@@ -40,7 +42,10 @@ export function CustomerModal({
         <CustomerForm
           customerId={customerId}
           initialData={initialData}
-          onSuccess={() => setOpen(false)}
+          onSuccess={async () => {
+            setOpen(false);
+            await onSuccess?.();
+          }}
         />
       </DialogContent>
     </Dialog>

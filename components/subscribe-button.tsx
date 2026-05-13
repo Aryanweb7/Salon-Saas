@@ -63,7 +63,7 @@ export function SubscribeButton({ planId, isLoading = false, className }: Subscr
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
         subscription_id: result.subscriptionId,
         name: "SalonFlow",
-        description: `Subscribe to ${planId.toUpperCase()} plan`,
+        description: `${planId.toUpperCase()} plan - 14-day free trial, then monthly auto-renewal`,
         prefill: {
           name: result.salonName,
           email: result.email,
@@ -80,8 +80,8 @@ export function SubscribeButton({ planId, isLoading = false, className }: Subscr
             });
 
             if (verifyResult.success) {
-              toast.success("Subscription activated successfully!");
-              window.location.href = "/app/billing";
+              toast.success(verifyResult.message ?? "Subscription updated successfully.");
+              window.location.href = "/billing";
             } else {
               toast.error("Payment verification failed");
             }
@@ -104,7 +104,7 @@ export function SubscribeButton({ planId, isLoading = false, className }: Subscr
       disabled={isLoading || !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID}
       className={cn(className)}
     >
-      Start 14-day free trial
+      {planId === "pro" ? "Start 14-Day Free Trial" : "Subscribe Now"}
     </Button>
   );
 }

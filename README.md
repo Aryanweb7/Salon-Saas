@@ -1,6 +1,6 @@
 # SalonFlow
 
-SalonFlow is a multi-tenant salon SaaS built on Next.js App Router with Neon PostgreSQL, Drizzle ORM, Clerk authentication, Razorpay billing, and WhatsApp messaging abstractions.
+SalonFlow is a multi-tenant salon SaaS built on Next.js App Router with Neon PostgreSQL, Drizzle ORM, Auth.js authentication, Razorpay billing, and WhatsApp messaging abstractions.
 
 ## Stack
 
@@ -9,7 +9,7 @@ SalonFlow is a multi-tenant salon SaaS built on Next.js App Router with Neon Pos
 - Tailwind CSS
 - Neon PostgreSQL
 - Drizzle ORM
-- Clerk Auth
+- Auth.js
 - Razorpay
 - Recharts
 
@@ -31,8 +31,8 @@ Copy `.env.example` into `.env.local` and set:
 
 - `DATABASE_URL`
 - `DATABASE_URL_UNPOOLED`
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- `CLERK_SECRET_KEY`
+- `NEXTAUTH_SECRET`
+- `NEXTAUTH_URL`
 - `RAZORPAY_KEY_ID`
 - `RAZORPAY_KEY_SECRET`
 - `RAZORPAY_WEBHOOK_SECRET`
@@ -41,10 +41,11 @@ Copy `.env.example` into `.env.local` and set:
 
 ## Auth flow
 
-- Clerk handles sign up, sign in, sign out, and sessions.
-- Application users are mirrored in the `users` table with `role` and `salonId`.
+- Auth.js handles sign in, sign out, and sessions through the credentials provider.
+- Registration provisions salon owners directly in Neon and then signs them in through Auth.js.
+- Application users live in the `users` table with `role`, `salonId`, and `passwordHash`.
 - Tenant resolution happens server-side through `getSessionContext()` and `getCurrentSalonId()`.
-- Admin routes are protected in `middleware.ts`.
+- Dashboard routes are protected in `proxy.ts`; public marketing, pricing, login, and registration routes remain open.
 
 ## Billing lifecycle
 
@@ -73,8 +74,8 @@ Trigger `POST /api/cron/daily` from Vercel Cron for:
 - reminder workflows
 - daily billing checks
 
-Register Razorpay webhook URL at `/api/webhooks/razorpay`.
+Register the Razorpay webhook URL at `/api/webhooks/razorpay`.
 
 ## Deployment
 
-Deploy to Vercel, add the environment variables, provision Neon, run Drizzle migrations, connect Clerk, and configure Razorpay + Cron endpoints.
+Deploy to Vercel, add the environment variables, provision Neon, run Drizzle migrations, and configure Razorpay + Cron endpoints.

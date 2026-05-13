@@ -37,6 +37,8 @@ export interface ButtonProps
   asChild?: boolean;
 }
 
+export { buttonVariants };
+
 export function Button({
   className,
   variant,

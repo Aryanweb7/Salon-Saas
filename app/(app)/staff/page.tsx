@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { StaffModal } from "@/components/staff-modal";
 import { getSessionContext } from "@/lib/auth";
 import { listStaffReport } from "@/lib/db/reports";
 import { formatCurrency } from "@/lib/utils";
@@ -16,7 +16,7 @@ export default async function StaffPage() {
           <h1 className="text-4xl font-semibold">Staff management</h1>
           <p className="mt-2 text-[var(--muted-foreground)]">Roles, commission rates, attendance, and performance stats with plan-aware user caps.</p>
         </div>
-        <Button>Add Staff Member</Button>
+        <StaffModal readOnly={session.readOnlyMode} />
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         {staff.map((member) => (

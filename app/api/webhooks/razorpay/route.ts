@@ -19,7 +19,16 @@ export async function POST(request: Request) {
         entity?: {
           id?: string;
           amount?: number;
-          notes?: { salonId?: string };
+          subscription_id?: string;
+          notes?: { salonId?: string; planId?: string };
+        };
+      };
+      invoice?: {
+        entity?: {
+          id?: string;
+          amount_paid?: number;
+          subscription_id?: string;
+          notes?: { salonId?: string; planId?: string };
         };
       };
       subscription?: {
@@ -33,53 +42,63 @@ export async function POST(request: Request) {
     };
   };
 
-  const salonId = event.payload?.payment?.entity?.notes?.salonId || event.payload?.subscription?.entity?.notes?.salonId;
+  const subscriptionId =
+    event.payload?.invoice?.entity?.subscription_id ||
+    event.payload?.payment?.entity?.subscription_id ||
+    event.payload?.subscription?.entity?.id;
+  const salonId =
+    event.payload?.payment?.entity?.notes?.salonId ||
+    event.payload?.invoice?.entity?.notes?.salonId ||
+    event.payload?.subscription?.entity?.notes?.salonId;
 
-  if (!salonId) {
-    return NextResponse.json({ error: "No salon ID found" }, { status: 400 });
+  if (!salonId && !subscriptionId) {
+    return NextResponse.json({ error: "No salon or subscription ID found" }, { status: 400 });
   }
 
   try {
-    // Handle payment events
-    if (event.event === "payment.captured") {
+    if (event.event === "invoice.paid" || event.event === "payment.captured") {
       await updateSubscriptionStatusFromPayment({
-        salonId,
+        salonId: salonId ?? "",
         status: "active",
-        paymentId: event.payload?.payment?.entity?.id,
-        paidAmount: (event.payload?.payment?.entity?.amount ?? 0) / 100,
+        paymentId: event.payload?.payment?.entity?.id ?? event.payload?.invoice?.entity?.id,
+        paidAmount: ((event.payload?.payment?.entity?.amount ?? event.payload?.invoice?.entity?.amount_paid) ?? 0) / 100,
+        razorpaySubscriptionId: subscriptionId,
       });
     }
 
     if (event.event === "payment.failed") {
       await updateSubscriptionStatusFromPayment({
-        salonId,
+        salonId: salonId ?? "",
         status: "past_due",
         paymentId: event.payload?.payment?.entity?.id,
+        razorpaySubscriptionId: subscriptionId,
       });
     }
 
-    // Handle subscription events
     if (event.event === "subscription.activated" || event.event === "subscription.charged") {
       await updateSubscriptionStatusFromPayment({
-        salonId,
+        salonId: salonId ?? "",
         status: "active",
         paymentId: event.payload?.subscription?.entity?.id,
+        razorpaySubscriptionId: subscriptionId,
       });
     }
 
     if (event.event === "subscription.failed" || event.event === "subscription.halted") {
       await updateSubscriptionStatusFromPayment({
-        salonId,
+        salonId: salonId ?? "",
         status: "past_due",
         paymentId: event.payload?.subscription?.entity?.id,
+        razorpaySubscriptionId: subscriptionId,
       });
     }
 
     if (event.event === "subscription.cancelled") {
       await updateSubscriptionStatusFromPayment({
-        salonId,
-        status: "expired",
+        salonId: salonId ?? "",
+        status: "canceled",
         paymentId: event.payload?.subscription?.entity?.id,
+        razorpaySubscriptionId: subscriptionId,
       });
     }
 
@@ -87,11 +106,11 @@ export async function POST(request: Request) {
       success: true,
       event: event.event,
       workflow: [
-        "payment.captured -> active",
+        "invoice.paid/payment.captured -> active",
         "payment.failed -> past_due",
         "subscription.activated -> active",
         "subscription.failed -> past_due",
-        "subscription.cancelled -> expired",
+        "subscription.cancelled -> canceled + read-only",
         "cron after 3 days -> overdue + read-only",
       ],
     });

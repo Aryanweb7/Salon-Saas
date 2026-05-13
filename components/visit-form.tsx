@@ -25,7 +25,7 @@ interface VisitFormProps {
   onSuccess?: () => void;
 }
 
-const SERVICES = ["Haircut", "Facial"];
+const SERVICES = ["Haircut", "Facial", "Other"];
 
 export function VisitForm({ customers, onSuccess }: VisitFormProps) {
   const [formData, setFormData] = useState<VisitFormData>({

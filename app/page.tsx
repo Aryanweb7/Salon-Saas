@@ -11,8 +11,8 @@ const features = [
   { title: "Smart Scheduling", icon: CalendarSync, description: "Calendar booking, walk-ins, reschedules, staff assignment, and front-desk visibility." },
   { title: "WhatsApp Automations", icon: MessageCircleMore, description: "Appointment reminders, revisit nudges, birthday offers, thank-you notes, and delivery tracking." },
   { title: "Recurring Billing", icon: CreditCard, description: "Razorpay subscription lifecycle with trial, renewal, grace period, failed payments, and read-only downgrade." },
-  { title: "Role + Tenant Security", icon: ShieldCheck, description: "Salon-isolated data, server checks, middleware gating, and admin-only platform analytics." },
-  { title: "Premium Experience", icon: Sparkles, description: "A polished SaaS cockpit for owners, receptionists, staff members, and your internal super admin team." },
+  { title: "Role + Tenant Security", icon: ShieldCheck, description: "Salon-isolated data, server checks, middleware gating, and clear staff roles." },
+  { title: "Premium Experience", icon: Sparkles, description: "A polished SaaS cockpit for owners, receptionists, and staff members." },
 ];
 
 export default function HomePage() {
@@ -25,7 +25,7 @@ export default function HomePage() {
             SalonFlow keeps every chair booked, every customer remembered, and every subscription in control.
           </h1>
           <p className="max-w-2xl text-lg text-[var(--muted-foreground)]">
-            A production-minded full-stack SaaS starter with multi-tenant isolation, owner dashboards, staff workflows, admin revenue intelligence, and WhatsApp automation hooks.
+            A production-minded full-stack SaaS starter with multi-tenant isolation, owner dashboards, staff workflows, subscription billing, and WhatsApp automation hooks.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link href="/register"><Button size="lg">Start Free Trial <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>

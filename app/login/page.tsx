@@ -1,37 +1,79 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
-import { SignInButton } from "@clerk/nextjs";
+"use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-export default async function LoginPage() {
-  const { userId } = await auth();
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (userId) {
-    redirect("/dashboard");
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const json = (await res.json().catch(() => null)) as { error?: string; redirectTo?: string } | null;
+
+    if (!res.ok) {
+      setError(json?.error ?? "Invalid owner credentials");
+      setLoading(false);
+      return;
+    }
+
+    router.replace(json?.redirectTo ?? "/dashboard");
   }
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md space-y-5">
-        <div>
+        <div className="space-y-2">
           <h1 className="text-3xl font-semibold">Welcome back</h1>
-          <p className="mt-2 text-sm text-[var(--muted-foreground)]">Sign in with Supabase Auth or Clerk. Demo screen uses placeholder form values.</p>
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Sign in to your salon workspace.
+          </p>
         </div>
-        <div className="space-y-3">
-          <Input placeholder="owner@salon.com" />
-          <Input placeholder="Password" type="password" />
-        </div>
-        <SignInButton mode="modal" fallbackRedirectUrl="/dashboard">
-          <Button className="w-full">Login to Salon Dashboard</Button>
-        </SignInButton>
-        <SignInButton mode="modal" fallbackRedirectUrl="/admin">
-          <Button className="w-full" variant="outline">Login as Super Admin</Button>
-        </SignInButton>
-        <p className="text-sm text-[var(--muted-foreground)]">No account? <Link href="/register" className="font-medium text-[var(--primary)]">Start your free trial</Link></p>
+
+        {error ? (
+          <Badge tone="danger" className="w-fit">
+            {error}
+          </Badge>
+        ) : null}
+
+        <form className="space-y-3" onSubmit={onSubmit}>
+          <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+          <Input value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" type="password" />
+          <Button className="w-full" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
+          </Button>
+        </form>
+
+        <p className="text-sm text-[var(--muted-foreground)]">
+          <Link href="/forgot-password" className="font-medium text-[var(--primary)]">
+            Forgot password?
+          </Link>
+        </p>
+
+        <p className="text-sm text-[var(--muted-foreground)]">
+          No account?{" "}
+          <Link href="/register" className="font-medium text-[var(--primary)]">
+            Start your free trial
+          </Link>
+        </p>
       </Card>
     </main>
   );
