@@ -58,8 +58,9 @@ export async function POST(request: NextRequest) {
       name: salonName,
       slug,
       city,
-      planId: "basic",
-      status: "trial",
+      planId: "free",
+      status: "active",
+      readOnlyMode: false,
     })
     .returning({ id: salons.id, name: salons.name });
 
@@ -83,8 +84,9 @@ export async function POST(request: NextRequest) {
 
   await db.insert(subscriptions).values({
     salonId: salon.id,
-    planId: "basic",
-    status: "trial",
+    planId: "free",
+    status: "active",
+    currentPeriodStart: new Date(),
   });
 
   return NextResponse.json({ ok: true, redirectTo: "/dashboard", email });

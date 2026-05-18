@@ -37,11 +37,10 @@ export function getRazorpayClient() {
   });
 }
 
-export function getPlanSubscriptionPayload(planId: "basic" | "pro" | "premium") {
+export function getPlanSubscriptionPayload(planId: "basic" | "pro") {
   return {
     basic: { planId: "plan_SiuCLoUSjpJsbe", amount: 99900 },
     pro: { planId: "plan_SiuDiPMGIpOtzR", amount: 199900 },
-    premium: { planId: "plan_SiuEHYgpKaSr0W", amount: 399900 },
   }[planId];
 }
 

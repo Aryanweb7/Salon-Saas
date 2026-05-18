@@ -41,6 +41,9 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md space-y-5">
+        <Link href="/" className="inline-flex w-fit text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+          Back
+        </Link>
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold">Welcome back</h1>
           <p className="text-sm text-[var(--muted-foreground)]">
@@ -71,7 +74,7 @@ export default function LoginPage() {
         <p className="text-sm text-[var(--muted-foreground)]">
           No account?{" "}
           <Link href="/register" className="font-medium text-[var(--primary)]">
-            Start your free trial
+            Create account
           </Link>
         </p>
       </Card>

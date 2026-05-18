@@ -11,7 +11,6 @@ const staffSchema = z.object({
   name: z.string().min(1, "Name is required").max(160),
   roleLabel: z.string().min(1, "Role is required").max(120),
   commissionRate: z.coerce.number().int().min(0).max(100),
-  attendanceRate: z.coerce.number().int().min(0).max(100),
 });
 
 export type StaffFormData = z.infer<typeof staffSchema>;

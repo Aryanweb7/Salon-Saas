@@ -3,10 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import {
-  updateBusinessProfileAction,
-  updateWhatsappSettingsAction,
-} from "@/app/actions/settings";
+import { updateBusinessProfileAction } from "@/app/actions/settings";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,7 +23,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import type { SalonSettingsConfig } from "@/lib/db/settings";
 
 export function BusinessProfileSettings({
@@ -126,92 +122,12 @@ export function BusinessProfileSettings({
   );
 }
 
-export function WhatsappTemplateSettings({
-  config,
-  readOnly,
-}: {
-  config: SalonSettingsConfig;
-  readOnly: boolean;
-}) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMessage(null);
-    const form = new FormData(event.currentTarget);
-
-    startTransition(async () => {
-      const result = await updateWhatsappSettingsAction({
-        appointmentReminderTemplate: String(form.get("appointmentReminderTemplate") ?? ""),
-        revisitTemplate: String(form.get("revisitTemplate") ?? ""),
-        birthdayTemplate: String(form.get("birthdayTemplate") ?? ""),
-        supportTemplate: String(form.get("supportTemplate") ?? ""),
-        reminderHoursBefore: Number(form.get("reminderHoursBefore") ?? 24),
-        revisitDaysAfter: Number(form.get("revisitDaysAfter") ?? 30),
-        birthdaySendTime: String(form.get("birthdaySendTime") ?? "09:00"),
-      });
-
-      if (!result.success) {
-        setMessage(result.error ?? "Failed to update WhatsApp settings");
-        return;
-      }
-
-      setOpen(false);
-      router.refresh();
-    });
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" disabled={readOnly}>Open templates</Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>WhatsApp templates</DialogTitle>
-          <DialogDescription>Configure automation timing and approved template copy.</DialogDescription>
-        </DialogHeader>
-        <form className="grid gap-4" onSubmit={onSubmit}>
-          {message ? <FormMessage>{message}</FormMessage> : null}
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Reminder hours" id="reminderHoursBefore">
-              <Input id="reminderHoursBefore" name="reminderHoursBefore" type="number" min={1} max={168} defaultValue={config.reminderHoursBefore ?? 24} />
-            </Field>
-            <Field label="Revisit days" id="revisitDaysAfter">
-              <Input id="revisitDaysAfter" name="revisitDaysAfter" type="number" min={1} max={365} defaultValue={config.revisitDaysAfter ?? 30} />
-            </Field>
-          </div>
-          <Field label="Birthday send time" id="birthdaySendTime">
-            <Input id="birthdaySendTime" name="birthdaySendTime" type="time" defaultValue={config.birthdaySendTime ?? "09:00"} />
-          </Field>
-          <TemplateField id="appointmentReminderTemplate" label="Appointment reminder" defaultValue={config.appointmentReminderTemplate} />
-          <TemplateField id="revisitTemplate" label="30-day revisit nudge" defaultValue={config.revisitTemplate} />
-          <TemplateField id="birthdayTemplate" label="Birthday offer" defaultValue={config.birthdayTemplate} />
-          <TemplateField id="supportTemplate" label="Fallback support" defaultValue={config.supportTemplate} />
-          <DialogActions isPending={isPending} pendingLabel="Saving..." label="Save templates" onCancel={() => setOpen(false)} />
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
       {children}
     </div>
-  );
-}
-
-function TemplateField({ id, label, defaultValue }: { id: string; label: string; defaultValue?: string }) {
-  return (
-    <Field label={label} id={id}>
-      <Textarea id={id} name={id} defaultValue={defaultValue ?? ""} rows={3} />
-    </Field>
   );
 }
 

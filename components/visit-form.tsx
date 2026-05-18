@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createVisitAction, type VisitFormData } from "@/app/actions/visits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,23 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [customerQuery, setCustomerQuery] = useState("");
+  const selectedCustomer = customers.find((customer) => customer.id === formData.customerId);
+  const filteredCustomers = useMemo(() => {
+    const query = customerQuery.trim().toLowerCase();
+
+    if (!query) {
+      return customers.slice(0, 8);
+    }
+
+    return customers
+      .filter((customer) => {
+        const name = customer.name.toLowerCase();
+        const phone = customer.phone?.toLowerCase() ?? "";
+        return name.includes(query) || phone.includes(query);
+      })
+      .slice(0, 8);
+  }, [customerQuery, customers]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -110,18 +127,44 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="customerId">Customer *</Label>
-          <Select value={formData.customerId} onValueChange={(value) => handleSelectChange("customerId", value)}>
-            <SelectTrigger id="customerId">
-              <SelectValue placeholder="Select a customer" />
-            </SelectTrigger>
-            <SelectContent>
-              {customers.map((customer) => (
-                <SelectItem key={customer.id} value={customer.id}>
-                  {customer.name} {customer.phone && `(${customer.phone})`}
-                </SelectItem>
+          <div className="space-y-2">
+            <Input
+              id="customerId"
+              value={customerQuery}
+              onChange={(event) => {
+                setCustomerQuery(event.target.value);
+                handleSelectChange("customerId", "");
+              }}
+              placeholder="Search customer by name or phone"
+            />
+            <div className="max-h-44 overflow-y-auto rounded-2xl border bg-[var(--background)] p-1">
+              {filteredCustomers.map((customer) => (
+                <button
+                  key={customer.id}
+                  type="button"
+                  onClick={() => {
+                    handleSelectChange("customerId", customer.id);
+                    setCustomerQuery(customer.name);
+                  }}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-[var(--muted)]"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{customer.name}</span>
+                    {customer.phone ? <span className="block truncate text-xs text-[var(--muted-foreground)]">{customer.phone}</span> : null}
+                  </span>
+                  {formData.customerId === customer.id ? <span className="text-xs text-[var(--muted-foreground)]">Selected</span> : null}
+                </button>
               ))}
-            </SelectContent>
-          </Select>
+              {filteredCustomers.length === 0 ? (
+                <p className="px-3 py-2 text-sm text-[var(--muted-foreground)]">No customers found</p>
+              ) : null}
+            </div>
+            {selectedCustomer ? (
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Selected: {selectedCustomer.name}{selectedCustomer.phone ? ` - ${selectedCustomer.phone}` : ""}
+              </p>
+            ) : null}
+          </div>
         </div>
 
         <div className="space-y-2">

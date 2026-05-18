@@ -1,18 +1,50 @@
 import Link from "next/link";
-import { ArrowRight, CalendarSync, CreditCard, MessageCircleMore, ShieldCheck, Sparkles, Users } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarSync,
+  CreditCard,
+  Mail,
+  Megaphone,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from "lucide-react";
 
-import { PlanCard } from "@/components/plan-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 const features = [
-  { title: "Salon CRM", icon: Users, description: "Customer profiles, birthdays, notes, visit history, and preferred stylists in one shared timeline." },
-  { title: "Smart Scheduling", icon: CalendarSync, description: "Calendar booking, walk-ins, reschedules, staff assignment, and front-desk visibility." },
-  { title: "WhatsApp Automations", icon: MessageCircleMore, description: "Appointment reminders, revisit nudges, birthday offers, thank-you notes, and delivery tracking." },
-  { title: "Recurring Billing", icon: CreditCard, description: "Razorpay subscription lifecycle with trial, renewal, grace period, failed payments, and read-only downgrade." },
-  { title: "Role + Tenant Security", icon: ShieldCheck, description: "Salon-isolated data, server checks, middleware gating, and clear staff roles." },
-  { title: "Premium Experience", icon: Sparkles, description: "A polished SaaS cockpit for owners, receptionists, and staff members." },
+  {
+    title: "Customer CRM",
+    icon: Users,
+    description: "Save searchable customer profiles with phone numbers, emails, birthdays, notes, preferred staff, and visit history.",
+  },
+  {
+    title: "Appointments",
+    icon: CalendarSync,
+    description: "Create bookings with searchable customer selection, send confirmation emails, and auto-complete old appointments.",
+  },
+  {
+    title: "Email Campaigns",
+    icon: Megaphone,
+    description: "Build polished email campaigns with templates, audience targeting, live preview, and monthly plan limits.",
+  },
+  {
+    title: "Billing Plans",
+    icon: CreditCard,
+    description: "Use Free, Basic, or Pro plans with Razorpay subscriptions for paid upgrades.",
+  },
+  {
+    title: "Reports",
+    icon: ShieldCheck,
+    description: "Track revenue, returning customers, booking demand, and salon growth without clutter.",
+  },
+  {
+    title: "Automated Email",
+    icon: Mail,
+    description: "Send appointment confirmation emails and control monthly email usage by Free, Basic, and Pro plans.",
+  },
 ];
 
 export default function HomePage() {
@@ -22,26 +54,35 @@ export default function HomePage() {
         <div className="space-y-6">
           <Badge tone="warning">Built for salons, barbershops, beauty parlors, and grooming studios</Badge>
           <h1 className="max-w-4xl text-5xl font-bold tracking-tight md:text-7xl">
-            SalonFlow keeps every chair booked, every customer remembered, and every subscription in control.
+            SalonFlow helps salon owners manage bookings, customers, visits, and email campaigns.
           </h1>
           <p className="max-w-2xl text-lg text-[var(--muted-foreground)]">
-            A production-minded full-stack SaaS starter with multi-tenant isolation, owner dashboards, staff workflows, subscription billing, and WhatsApp automation hooks.
+            Run daily salon operations from one focused workspace: searchable customer records, appointment
+            confirmations, visit billing, staff management, reports, and plan-based email marketing.
           </p>
           <div className="flex flex-wrap gap-3">
-            <Link href="/register"><Button size="lg">Start Free Trial <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
-            <Link href="/pricing"><Button variant="outline" size="lg">View Pricing</Button></Link>
-            <Link href="/login"><Button variant="ghost" size="lg">Demo Login</Button></Link>
+            <Link href="/register">
+              <Button size="lg">
+                Signup <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="outline" size="lg">
+                Login
+              </Button>
+            </Link>
           </div>
         </div>
+
         <Card className="overflow-hidden bg-[linear-gradient(180deg,rgba(255,248,240,0.96),rgba(242,230,214,0.92))] text-[var(--foreground)]">
           <div className="space-y-4">
-            <Badge className="bg-[var(--foreground)]/8 text-[var(--foreground)]">Live SaaS snapshot</Badge>
+            <Badge className="bg-[var(--foreground)]/8 text-[var(--foreground)]">Salon owner toolkit</Badge>
             <div className="grid grid-cols-2 gap-4">
               {[
-                ["MRR", "₹2.14L"],
-                ["Active salons", "91"],
-                ["Messages", "8,142"],
-                ["Trials ending", "11"],
+                ["Plans", "Free, Basic, Pro"],
+                ["Customers", "Search + history"],
+                ["Emails", "5 / 10 / 20 monthly"],
+                ["Billing", "Razorpay"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-3xl border border-[var(--border)] bg-white/40 p-4">
                   <p className="text-sm text-[var(--muted-foreground)]">{label}</p>
@@ -50,8 +91,10 @@ export default function HomePage() {
               ))}
             </div>
             <div className="rounded-3xl border border-[var(--border)] bg-white/40 p-5">
-              <p className="text-sm text-[var(--muted-foreground)]">Automation coverage</p>
-              <p className="mt-2 text-2xl font-semibold">Appointment reminders, birthday offers, revisit nudges, payment recovery.</p>
+              <p className="text-sm text-[var(--muted-foreground)]">Daily operations</p>
+              <p className="mt-2 text-2xl font-semibold">
+                Appointments, visit records, staff, reports, email campaigns, and subscription billing.
+              </p>
             </div>
           </div>
         </Card>
@@ -70,20 +113,6 @@ export default function HomePage() {
             </Card>
           );
         })}
-      </section>
-
-      <section className="mt-16">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Pricing</p>
-            <h2 className="text-3xl font-semibold">Simple monthly plans for every growth stage</h2>
-          </div>
-        </div>
-        <div className="grid gap-5 lg:grid-cols-3">
-          <PlanCard planId="basic" />
-          <PlanCard planId="pro" />
-          <PlanCard planId="premium" />
-        </div>
       </section>
     </main>
   );

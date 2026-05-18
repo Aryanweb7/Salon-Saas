@@ -19,19 +19,19 @@ export function PlanCard({ planId }: { planId: keyof typeof PLAN_DEFINITIONS }) 
       <ul className="space-y-3 text-sm text-[var(--muted-foreground)]">
         <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 text-[var(--success)]" /> {plan.staffLimit ?? "Unlimited"} staff users</li>
         <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 text-[var(--success)]" /> {plan.customerLimit ?? "Unlimited"} customers</li>
-        <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 text-[var(--success)]" /> {plan.reminderLimit ?? "Unlimited"} WhatsApp reminders</li>
-        {Object.entries(plan.features).filter(([, enabled]) => enabled).slice(0, 4).map(([feature]) => (
-          <li key={feature} className="flex gap-3"><Check className="mt-0.5 h-4 w-4 text-[var(--success)]" /> {feature}</li>
-        ))}
+        <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 text-[var(--success)]" /> {plan.emailLimit ?? "Unlimited"} campaign emails/month</li>
       </ul>
       <div className="mt-auto space-y-3">
-        <SubscribeButton planId={planId} className="w-full" />
-        {planId === "pro" ? (
-          <p className="text-xs leading-5 text-[var(--muted-foreground)]">
-            No payment will be charged today. Billing starts automatically after your 14-day free trial.
-            Cancel anytime before trial ends. Card authorization may be required and the subscription auto-renews monthly.
-          </p>
-        ) : null}
+        {planId === "free" ? (
+          <div className="flex h-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--muted)]/60 px-4 text-sm font-medium">
+            Included on signup
+          </div>
+        ) : (
+          <SubscribeButton planId={planId} className="w-full" />
+        )}
+        <p className="text-xs leading-5 text-[var(--muted-foreground)]">
+          {planId === "free" ? "Limited free plan for getting started." : "Monthly subscription. Cancel anytime."}
+        </p>
       </div>
     </Card>
   );

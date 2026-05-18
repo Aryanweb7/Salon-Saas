@@ -63,7 +63,7 @@ export function AppointmentCardActions({
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const isCancelled = appointment.statusRaw === "cancelled";
+  const isLocked = appointment.statusRaw === "cancelled" || appointment.statusRaw === "completed";
 
   function onReschedule(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -106,7 +106,7 @@ export function AppointmentCardActions({
       <div className="flex gap-2">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm" disabled={readOnly || isCancelled}>
+            <Button variant="outline" size="sm" disabled={readOnly || isLocked}>
               Reschedule
             </Button>
           </DialogTrigger>
@@ -170,7 +170,7 @@ export function AppointmentCardActions({
           </DialogContent>
         </Dialog>
 
-        <Button variant="ghost" size="sm" disabled={readOnly || isPending || isCancelled} onClick={onCancel}>
+        <Button variant="ghost" size="sm" disabled={readOnly || isPending || isLocked} onClick={onCancel}>
           {isPending ? "Working..." : "Cancel"}
         </Button>
       </div>

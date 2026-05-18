@@ -4,8 +4,30 @@ import { db } from "@/db";
 import { appointments, customers, reminders, staff } from "@/db/schema";
 import { fallbackAppointmentSeries, fallbackAppointments, fallbackOwnerStats, fallbackReminders } from "@/lib/fallback-data";
 
+async function completePastAppointments(salonId: string) {
+  if (!salonId) {
+    return;
+  }
+
+  await db
+    .update(appointments)
+    .set({
+      status: "completed",
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(appointments.salonId, salonId),
+        sql`${appointments.status} in ('pending', 'confirmed', 'checked_in')`,
+        sql`coalesce(${appointments.endAt}, ${appointments.startAt}) < now()`,
+      ),
+    );
+}
+
 export async function listAppointmentsForSalon(salonId: string) {
   try {
+    await completePastAppointments(salonId);
+
     const rows = await db
       .select({
         id: appointments.id,
@@ -22,7 +44,12 @@ export async function listAppointmentsForSalon(salonId: string) {
       .from(appointments)
       .leftJoin(customers, eq(customers.id, appointments.customerId))
       .leftJoin(staff, eq(staff.id, appointments.staffId))
-      .where(eq(appointments.salonId, salonId))
+      .where(
+        and(
+          eq(appointments.salonId, salonId),
+          sql`not (${appointments.status} = 'completed' and coalesce(${appointments.endAt}, ${appointments.startAt}) < now() - interval '24 hours')`,
+        ),
+      )
       .orderBy(appointments.startAt)
       .limit(20);
 
@@ -165,6 +192,8 @@ export async function cancelAppointment(appointmentId: string, salonId: string) 
 
 export async function getDashboardAppointmentStats(salonId: string) {
   try {
+    await completePastAppointments(salonId);
+
     const [stats] = await db
       .select({
         todayAppointments: sql<number>`count(*) filter (where date(${appointments.startAt}) = current_date)`,

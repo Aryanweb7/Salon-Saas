@@ -1,7 +1,6 @@
 export type Role = "SALON_OWNER" | "STAFF_MEMBER" | "RECEPTIONIST";
-export type PlanId = "basic" | "pro" | "premium";
+export type PlanId = "free" | "basic" | "pro";
 export type SubscriptionStatus =
-  | "trial"
   | "active"
   | "past_due"
   | "overdue"
@@ -27,6 +26,7 @@ export interface PlanDefinition {
   staffLimit: number | null;
   customerLimit: number | null;
   reminderLimit: number | null;
+  emailLimit: number | null;
   mostPopular?: boolean;
   features: Record<FeatureKey, boolean>;
 }

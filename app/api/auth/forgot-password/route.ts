@@ -4,14 +4,19 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { passwordResetTokens, users } from "@/db/schema";
 import { createPasswordResetToken, getPasswordResetExpiry, hashPasswordResetToken } from "@/lib/auth/password-reset";
+import { sendPasswordResetEmail } from "@/lib/email";
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => null)) as { email?: string } | null;
     const email = body?.email?.trim().toLowerCase();
 
-    if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    if (!email || !isValidEmail(email)) {
+      return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
     }
 
     const [user] = await db
@@ -35,6 +40,11 @@ export async function POST(request: Request) {
 
     const resetUrl = new URL("/reset-password", request.url);
     resetUrl.searchParams.set("token", token);
+
+    await sendPasswordResetEmail({
+      to: email,
+      resetUrl: resetUrl.toString(),
+    });
 
     return NextResponse.json({
       ok: true,

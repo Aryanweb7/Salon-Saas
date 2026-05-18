@@ -69,7 +69,6 @@ export async function listStaffReport(salonId: string) {
         name: staff.name,
         role: staff.roleLabel,
         commission: staff.commissionRate,
-        attendance: staff.attendanceRate,
         sales: staff.salesTotal,
       })
       .from(staff)
@@ -80,7 +79,6 @@ export async function listStaffReport(salonId: string) {
       name: row.name,
       role: row.role,
       commission: row.commission,
-      attendance: `${row.attendance}%`,
       sales: row.sales,
     }));
   } catch {

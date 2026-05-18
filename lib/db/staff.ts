@@ -22,7 +22,6 @@ export async function createStaffMember(
     name: string;
     roleLabel: string;
     commissionRate: number;
-    attendanceRate: number;
   }
 ) {
   try {
@@ -33,7 +32,7 @@ export async function createStaffMember(
         name: data.name,
         roleLabel: data.roleLabel,
         commissionRate: data.commissionRate,
-        attendanceRate: data.attendanceRate,
+        attendanceRate: 0,
       })
       .returning({ id: staff.id });
 

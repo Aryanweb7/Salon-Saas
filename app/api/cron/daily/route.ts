@@ -16,7 +16,6 @@ export async function POST() {
         "activate read-only mode",
         "queue WhatsApp reminders",
         "send birthday messages",
-        "send trial ending reminders",
         "run billing health checks",
       ],
       reminders,

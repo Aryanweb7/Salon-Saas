@@ -59,6 +59,37 @@ export async function getCustomerById(customerId: string, salonId: string) {
   }
 }
 
+export async function getCustomerCountForSalon(salonId: string) {
+  try {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(customers)
+      .where(eq(customers.salonId, salonId));
+
+    return Number(result?.count ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
+export async function listCustomerPhonesForSalon(salonId: string) {
+  try {
+    const rows = await db
+      .select({
+        id: customers.id,
+        name: customers.name,
+        phone: customers.phone,
+      })
+      .from(customers)
+      .where(eq(customers.salonId, salonId))
+      .orderBy(desc(customers.createdAt));
+
+    return rows.filter((customer) => customer.phone.trim().length > 0);
+  } catch {
+    return [];
+  }
+}
+
 export async function createCustomer(
   salonId: string,
   data: {
@@ -87,7 +118,8 @@ export async function createCustomer(
       .returning({ id: customers.id });
 
     return result;
-  } catch {
+  } catch (error) {
+    console.error("Failed to create customer", error);
     throw new Error("Failed to create customer");
   }
 }

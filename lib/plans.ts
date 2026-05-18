@@ -1,6 +1,26 @@
 import { PlanDefinition, type FeatureKey, type PlanId } from "@/lib/types";
 
 export const PLAN_DEFINITIONS: Record<PlanId, PlanDefinition> = {
+  free: {
+    id: "free",
+    name: "Free",
+    price: 0,
+    staffLimit: 1,
+    customerLimit: 50,
+    reminderLimit: 20,
+    emailLimit: 5,
+    features: {
+      birthdayCampaigns: false,
+      revisitAutomation: false,
+      advancedReports: false,
+      commissionAnalytics: false,
+      multiBranch: false,
+      whiteLabel: false,
+      customTemplates: false,
+      exportReports: false,
+      onlineBooking: false,
+    },
+  },
   basic: {
     id: "basic",
     name: "Basic",
@@ -8,6 +28,7 @@ export const PLAN_DEFINITIONS: Record<PlanId, PlanDefinition> = {
     staffLimit: 3,
     customerLimit: 500,
     reminderLimit: 100,
+    emailLimit: 10,
     features: {
       birthdayCampaigns: false,
       revisitAutomation: false,
@@ -27,6 +48,7 @@ export const PLAN_DEFINITIONS: Record<PlanId, PlanDefinition> = {
     staffLimit: 10,
     customerLimit: null,
     reminderLimit: 500,
+    emailLimit: 20,
     mostPopular: true,
     features: {
       birthdayCampaigns: true,
@@ -37,25 +59,6 @@ export const PLAN_DEFINITIONS: Record<PlanId, PlanDefinition> = {
       whiteLabel: false,
       customTemplates: false,
       exportReports: false,
-      onlineBooking: true,
-    },
-  },
-  premium: {
-    id: "premium",
-    name: "Premium",
-    price: 3999,
-    staffLimit: null,
-    customerLimit: null,
-    reminderLimit: null,
-    features: {
-      birthdayCampaigns: true,
-      revisitAutomation: true,
-      advancedReports: true,
-      commissionAnalytics: true,
-      multiBranch: true,
-      whiteLabel: true,
-      customTemplates: true,
-      exportReports: true,
       onlineBooking: true,
     },
   },

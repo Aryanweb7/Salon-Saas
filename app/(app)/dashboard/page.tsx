@@ -6,23 +6,21 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { getSessionContext } from "@/lib/auth";
 import { getAppointmentSeries, getDashboardAppointmentStats, listAppointmentsForSalon } from "@/lib/db/appointments";
 import { getCustomerStats } from "@/lib/db/customers";
-import { getRevenueSeries, listStaffReport } from "@/lib/db/reports";
+import { getRevenueSeries } from "@/lib/db/reports";
 import { getStaffDashboardStats } from "@/lib/db/staff";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const session = await getSessionContext();
   const salonId = session.salonId ?? "";
-  const [customerStats, appointmentStats, revenueSeries, appointmentSeries, appointments, staff, staffStats] = await Promise.all([
+  const [customerStats, appointmentStats, revenueSeries, appointmentSeries, appointments, staffStats] = await Promise.all([
     getCustomerStats(salonId),
     getDashboardAppointmentStats(salonId),
     getRevenueSeries(salonId),
     getAppointmentSeries(salonId),
     listAppointmentsForSalon(salonId),
-    listStaffReport(salonId),
     getStaffDashboardStats(salonId),
   ]);
-
   return (
     <div className="space-y-6">
       <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -30,14 +28,15 @@ export default async function DashboardPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Owner dashboard</p>
           <h1 className="text-4xl font-semibold">Today&apos;s salon pulse</h1>
         </div>
-        <Badge tone="success">All automations healthy</Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge tone="success">All automations healthy</Badge>
+        </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <MetricCard label="Total customers" value={customerStats.totalCustomers.toString()} trend={customerStats.customerTrend} />
         <MetricCard label="Today appointments" value={appointmentStats.todayAppointments.toString()} trend={appointmentStats.appointmentTrend} />
         <MetricCard label="This month revenue" value={formatCurrency(customerStats.monthRevenue)} trend={customerStats.revenueTrend} />
-        <MetricCard label="Pending reminders" value={appointmentStats.pendingReminders.toString()} trend={appointmentStats.reminderTrend} />
         <MetricCard label="Staff count" value={staffStats.totalStaff.toString()} trend={staffStats.staffTrend} />
         <MetricCard label="Returning customers" value={formatPercent(customerStats.returningCustomers)} trend={customerStats.returningTrend} />
       </section>
@@ -55,7 +54,7 @@ export default async function DashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-2">
+      <section>
         <Card className="space-y-4">
           <div>
             <CardTitle>Today&apos;s appointments</CardTitle>
@@ -72,24 +71,6 @@ export default async function DashboardPage() {
                   <span className="text-sm text-[var(--muted-foreground)]">{appointment.time}</span>
                   <Badge tone={appointment.status === "Pending" ? "warning" : "success"}>{appointment.status}</Badge>
                 </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card className="space-y-4">
-          <div>
-            <CardTitle>Reminder queue</CardTitle>
-            <CardDescription>WhatsApp automation logs for scheduled customer messages.</CardDescription>
-          </div>
-          <div className="space-y-3">
-            {appointmentStats.reminders.map((reminder) => (
-              <div key={`${reminder.template}-${reminder.scheduledFor}`} className="rounded-3xl border p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-medium">{reminder.template}</p>
-                  <Badge tone={reminder.status === "Sent" ? "success" : reminder.status === "Failed" ? "danger" : "warning"}>{reminder.status}</Badge>
-                </div>
-                <p className="mt-1 text-sm text-[var(--muted-foreground)]">{reminder.scheduledFor}</p>
               </div>
             ))}
           </div>

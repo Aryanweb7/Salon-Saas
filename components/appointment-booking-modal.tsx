@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { createAppointmentAction } from "@/app/actions/appointments";
 import { Button } from "@/components/ui/button";
@@ -41,8 +41,26 @@ export function AppointmentBookingModal({
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [customerQuery, setCustomerQuery] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [isPending, startTransition] = useTransition();
   const today = new Date().toISOString().slice(0, 10);
+  const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId);
+  const filteredCustomers = useMemo(() => {
+    const query = customerQuery.trim().toLowerCase();
+
+    if (!query) {
+      return customers.slice(0, 8);
+    }
+
+    return customers
+      .filter((customer) => {
+        const name = customer.name.toLowerCase();
+        const phone = customer.phone?.toLowerCase() ?? "";
+        return name.includes(query) || phone.includes(query);
+      })
+      .slice(0, 8);
+  }, [customerQuery, customers]);
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -92,19 +110,57 @@ export function AppointmentBookingModal({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>Customer</Label>
-              <Select name="customerId">
-                <SelectTrigger>
-                  <SelectValue placeholder="Walk-in or select customer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      {customer.name}{customer.phone ? ` - ${customer.phone}` : ""}
-                    </SelectItem>
+              <Label htmlFor="customer-search">Customer</Label>
+              <input type="hidden" name="customerId" value={selectedCustomerId} />
+              <div className="space-y-2">
+                <Input
+                  id="customer-search"
+                  value={customerQuery}
+                  onChange={(event) => {
+                    setCustomerQuery(event.target.value);
+                    setSelectedCustomerId("");
+                  }}
+                  placeholder="Search customer by name or phone"
+                />
+                <div className="max-h-44 overflow-y-auto rounded-2xl border bg-[var(--background)] p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCustomerId("");
+                      setCustomerQuery("");
+                    }}
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition hover:bg-[var(--muted)]"
+                  >
+                    <span>Walk-in customer</span>
+                    {!selectedCustomerId ? <span className="text-xs text-[var(--muted-foreground)]">Selected</span> : null}
+                  </button>
+                  {filteredCustomers.map((customer) => (
+                    <button
+                      key={customer.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCustomerId(customer.id);
+                        setCustomerQuery(customer.name);
+                      }}
+                      className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-[var(--muted)]"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">{customer.name}</span>
+                        {customer.phone ? <span className="block truncate text-xs text-[var(--muted-foreground)]">{customer.phone}</span> : null}
+                      </span>
+                      {selectedCustomerId === customer.id ? <span className="text-xs text-[var(--muted-foreground)]">Selected</span> : null}
+                    </button>
                   ))}
-                </SelectContent>
-              </Select>
+                  {filteredCustomers.length === 0 ? (
+                    <p className="px-3 py-2 text-sm text-[var(--muted-foreground)]">No customers found</p>
+                  ) : null}
+                </div>
+                {selectedCustomer ? (
+                  <p className="text-xs text-[var(--muted-foreground)]">
+                    Selected: {selectedCustomer.name}{selectedCustomer.phone ? ` - ${selectedCustomer.phone}` : ""}
+                  </p>
+                ) : null}
+              </div>
             </div>
 
             <div className="space-y-2">

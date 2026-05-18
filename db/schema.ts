@@ -20,8 +20,8 @@ const timestamps = {
 };
 
 export const roleEnum = pgEnum("role", ["SALON_OWNER", "STAFF_MEMBER", "RECEPTIONIST"]);
-export const planEnum = pgEnum("plan_id", ["basic", "pro", "premium"]);
-export const subscriptionStatusEnum = pgEnum("subscription_status", ["trial", "active", "past_due", "overdue", "expired", "canceled", "paused"]);
+export const planEnum = pgEnum("plan_id", ["free", "basic", "pro"]);
+export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "past_due", "overdue", "expired", "canceled", "paused"]);
 export const paymentStatusEnum = pgEnum("payment_status", ["created", "paid", "failed", "refunded"]);
 export const appointmentStatusEnum = pgEnum("appointment_status", ["pending", "confirmed", "checked_in", "completed", "cancelled", "no_show"]);
 export const messageStatusEnum = pgEnum("message_status", ["queued", "sent", "failed"]);
@@ -34,8 +34,8 @@ export const salons = pgTable(
     slug: varchar("slug", { length: 180 }).notNull(),
     ownerUserId: uuid("owner_user_id"),
     city: varchar("city", { length: 120 }),
-    planId: planEnum("plan_id").default("basic").notNull(),
-    status: subscriptionStatusEnum("status").default("trial").notNull(),
+    planId: planEnum("plan_id").default("free").notNull(),
+    status: subscriptionStatusEnum("status").default("paused").notNull(),
     readOnlyMode: boolean("read_only_mode").default(false).notNull(),
     nextBillingDate: timestamp("next_billing_date", { withTimezone: true }),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
@@ -107,10 +107,8 @@ export const subscriptions = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     salonId: uuid("salon_id").notNull().references(() => salons.id, { onDelete: "cascade" }),
     planId: planEnum("plan_id").notNull(),
-    status: subscriptionStatusEnum("status").default("trial").notNull(),
+    status: subscriptionStatusEnum("status").default("paused").notNull(),
     razorpaySubscriptionId: varchar("razorpay_subscription_id", { length: 255 }),
-    trialStartDate: timestamp("trial_start_date", { withTimezone: true }),
-    trialEndDate: timestamp("trial_end_date", { withTimezone: true }),
     currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
     currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
     graceEndsAt: timestamp("grace_ends_at", { withTimezone: true }),
@@ -280,6 +278,45 @@ export const messages = pgTable(
   }),
 );
 
+export const smsLogs = pgTable(
+  "sms_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id").notNull().references(() => salons.id, { onDelete: "cascade" }),
+    customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+    phone: varchar("phone", { length: 32 }).notNull(),
+    message: text("message").notNull(),
+    status: varchar("status", { length: 40 }).default("pending").notNull(),
+    twilioSid: varchar("twilio_sid", { length: 255 }),
+    ...timestamps,
+  },
+  (table) => ({
+    salonIdx: index("sms_logs_salon_idx").on(table.salonId),
+    customerIdx: index("sms_logs_customer_idx").on(table.customerId),
+    statusIdx: index("sms_logs_status_idx").on(table.status),
+  }),
+);
+
+export const emailCampaignLogs = pgTable(
+  "email_campaign_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id").notNull().references(() => salons.id, { onDelete: "cascade" }),
+    customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+    email: varchar("email", { length: 255 }).notNull(),
+    title: varchar("title", { length: 160 }).notNull(),
+    audience: varchar("audience", { length: 60 }).notNull(),
+    status: varchar("status", { length: 40 }).default("sent").notNull(),
+    error: text("error"),
+    ...timestamps,
+  },
+  (table) => ({
+    salonIdx: index("email_campaign_logs_salon_idx").on(table.salonId),
+    customerIdx: index("email_campaign_logs_customer_idx").on(table.customerId),
+    statusIdx: index("email_campaign_logs_status_idx").on(table.status),
+  }),
+);
+
 export const settings = pgTable(
   "settings",
   {
@@ -307,5 +344,6 @@ export const salonRelations = relations(salons, ({ many, one }) => ({
   staff: many(staff),
   reminders: many(reminders),
   messages: many(messages),
+  smsLogs: many(smsLogs),
   settings: one(settings),
 }));

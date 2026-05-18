@@ -1,8 +1,7 @@
 import { AlertTriangle, CheckCircle2, Clock3, CreditCard, Lock } from "lucide-react";
 
 import { CancelSubscriptionButton } from "@/components/cancel-subscription-button";
-import { SubscribeButton } from "@/components/subscribe-button";
-import { TestingPremiumButton } from "@/components/testing-premium-button";
+import { PlanCard } from "@/components/plan-card";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getSessionContext } from "@/lib/auth";
@@ -10,7 +9,6 @@ import { listRecentPaymentsForSalon } from "@/lib/db/salons";
 import { getBillingSnapshot } from "@/lib/db/subscriptions";
 import { getReadOnlyReason } from "@/lib/gating";
 import { PLAN_DEFINITIONS } from "@/lib/plans";
-import type { PlanId } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
 function formatDate(value: Date | null | undefined) {
@@ -19,18 +17,18 @@ function formatDate(value: Date | null | undefined) {
 
 function getStatusTone(status: string) {
   if (status === "active") return "success";
-  if (status === "trial" || status === "past_due") return "warning";
+  if (status === "past_due" || status === "paused") return "warning";
   if (status === "overdue" || status === "expired" || status === "canceled") return "danger";
   return "default";
 }
 
 function getStatusCopy(status: string) {
   if (status === "active") return "Billing is healthy and your workspace is fully editable.";
-  if (status === "trial") return "You are inside the trial window. Billing starts automatically after your 14-day free trial.";
   if (status === "past_due") return "A payment is overdue. The grace window is active before the workspace locks.";
   if (status === "overdue") return "The grace window has ended and the workspace is locked in read-only mode.";
   if (status === "expired") return "This subscription has expired. Renew to regain write access.";
   if (status === "canceled") return "This subscription is canceled. Start a new payment to restore access.";
+  if (status === "paused") return "Your workspace is read-only until a paid subscription is active.";
   return `Current status: ${status}`;
 }
 
@@ -50,14 +48,10 @@ export default async function BillingPage() {
   const payments = await listRecentPaymentsForSalon(session.salonId);
   const planId = billing?.planId ?? session.planId;
   const status = billing?.status ?? session.subscriptionStatus;
-  const hasActivePlan = status === "active" || status === "trial" || status === "past_due";
+  const hasActivePlan = status === "active" || status === "past_due";
   const currentPlan = hasActivePlan ? PLAN_DEFINITIONS[planId] : null;
   const readOnlyReason = session.readOnlyMode ? getReadOnlyReason(status) : null;
-  const upgradePlans = currentPlan
-    ? (Object.keys(PLAN_DEFINITIONS) as PlanId[]).filter((id) => PLAN_DEFINITIONS[id].price > currentPlan.price)
-    : [];
-  const canCancelSubscription = status === "active" || status === "trial" || status === "past_due";
-  const restorePlanId: PlanId = "pro";
+  const canCancelSubscription = planId !== "free" && (status === "active" || status === "past_due");
 
   return (
     <div className="space-y-6">
@@ -75,15 +69,15 @@ export default async function BillingPage() {
             <Badge tone={getStatusTone(status)}>{status.replace("_", " ")}</Badge>
           </div>
           <div>
-            <h2 className="text-3xl font-semibold">{currentPlan?.name ?? "Subscription canceled"}</h2>
+            <h2 className="text-3xl font-semibold">{currentPlan?.name ?? (status === "paused" ? "No active subscription" : "Subscription canceled")}</h2>
             <p className="mt-2 text-[var(--muted-foreground)]">
-              {currentPlan ? `${formatCurrency(currentPlan.price)} monthly` : "Choose a plan to restore full access."}
+              {currentPlan ? `${formatCurrency(currentPlan.price)} monthly` : "Subscribe to unlock full access."}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border p-4">
               <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Next payment date</p>
-              <p className="mt-2 text-lg font-semibold">{formatDate(billing?.nextBillingDate ?? billing?.trialEndDate ?? billing?.renewalDate)}</p>
+              <p className="mt-2 text-lg font-semibold">{formatDate(billing?.nextBillingDate ?? billing?.renewalDate)}</p>
             </div>
             <div className="rounded-2xl border p-4">
               <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Grace window ends</p>
@@ -91,13 +85,7 @@ export default async function BillingPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            {hasActivePlan
-              ? upgradePlans.map((upgradePlanId) => (
-                  <SubscribeButton key={upgradePlanId} planId={upgradePlanId} className="min-w-[190px]" />
-                ))
-              : <SubscribeButton planId={restorePlanId} className="min-w-[190px]" />}
             {canCancelSubscription ? <CancelSubscriptionButton /> : null}
-            <TestingPremiumButton />
           </div>
         </Card>
 
@@ -170,6 +158,20 @@ export default async function BillingPage() {
           ) : null}
         </Card>
       </div>
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-semibold">Available plans</h2>
+          <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+            Compare plan limits, automation access, and monthly pricing.
+          </p>
+        </div>
+        <div className="grid gap-5 lg:grid-cols-3">
+          <PlanCard planId="free" />
+          <PlanCard planId="basic" />
+          <PlanCard planId="pro" />
+        </div>
+      </section>
     </div>
   );
 }

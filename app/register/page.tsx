@@ -51,9 +51,12 @@ export default function RegisterPage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-2xl space-y-5">
+        <Link href="/" className="inline-flex w-fit text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+          Back
+        </Link>
         <div>
           <h1 className="text-3xl font-semibold">Create your SalonFlow workspace</h1>
-          <p className="mt-2 text-sm text-[var(--muted-foreground)]">Create an owner account and start your trial.</p>
+          <p className="mt-2 text-sm text-[var(--muted-foreground)]">Create an owner account. Choose a paid plan after signing in.</p>
         </div>
 
         {error ? (
@@ -72,7 +75,7 @@ export default function RegisterPage() {
             <Input value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Choose password" type="password" />
           </div>
           <Button className="w-full" disabled={loading}>
-            {loading ? "Creating workspace..." : "Start 14-day free trial"}
+            {loading ? "Creating workspace..." : "Create account"}
           </Button>
         </form>
 

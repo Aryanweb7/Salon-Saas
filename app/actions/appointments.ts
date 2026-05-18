@@ -5,6 +5,8 @@ import { z } from "zod";
 
 import { getSessionContext } from "@/lib/auth";
 import { cancelAppointment, createAppointment, rescheduleAppointment } from "@/lib/db/appointments";
+import { getCustomerById } from "@/lib/db/customers";
+import { sendAppointmentConfirmationEmail } from "@/lib/email";
 import { assertCanMutateWorkspace } from "@/lib/permissions";
 
 const appointmentSchema = z.object({
@@ -49,6 +51,25 @@ export async function createAppointmentAction(data: AppointmentFormData) {
       status: validated.status,
       notes: validated.notes || undefined,
     });
+
+    if (validated.customerId) {
+      try {
+        const customer = await getCustomerById(validated.customerId, session.salonId);
+
+        if (customer?.email) {
+          await sendAppointmentConfirmationEmail({
+            to: customer.email,
+            customerName: customer.name,
+            salonName: session.salonName ?? "our salon",
+            serviceName: validated.serviceName,
+            appointmentAt: startAt,
+            durationMinutes: validated.durationMinutes,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to send appointment confirmation email:", error);
+      }
+    }
 
     revalidatePath("/appointments");
     revalidatePath("/dashboard");

@@ -10,16 +10,15 @@ export async function getSalonSubscription(salonId: string) {
         planId: subscriptions.planId,
         status: subscriptions.status,
         renewalDate: subscriptions.currentPeriodEnd,
-        trialEndDate: subscriptions.trialEndDate,
       })
       .from(subscriptions)
       .where(eq(subscriptions.salonId, salonId))
       .orderBy(desc(subscriptions.createdAt))
       .limit(1);
 
-    return row ?? { planId: "pro" as const, status: "active" as const, renewalDate: null };
+    return row ?? { planId: "free" as const, status: "active" as const, renewalDate: null };
   } catch {
-    return { planId: "pro" as const, status: "active" as const, renewalDate: null };
+    return { planId: "free" as const, status: "active" as const, renewalDate: null };
   }
 }
 
@@ -32,8 +31,6 @@ export async function getBillingSnapshot(salonId: string) {
         status: subscriptions.status,
         renewalDate: subscriptions.currentPeriodEnd,
         graceEndsAt: subscriptions.graceEndsAt,
-        trialStartDate: subscriptions.trialStartDate,
-        trialEndDate: subscriptions.trialEndDate,
         razorpaySubscriptionId: subscriptions.razorpaySubscriptionId,
         readOnlyMode: salons.readOnlyMode,
         nextBillingDate: salons.nextBillingDate,
@@ -72,11 +69,9 @@ export async function listSubscriptionCards() {
 export async function createSubscriptionRecord(
   salonId: string,
   data: {
-    planId: "basic" | "pro" | "premium";
+    planId: "basic" | "pro";
     amount: number;
     razorpaySubscriptionId: string;
-    trialStartDate?: Date;
-    trialEndDate?: Date;
   }
 ) {
   try {
@@ -85,27 +80,21 @@ export async function createSubscriptionRecord(
       .values({
         salonId,
         planId: data.planId,
-        status: "trial",
+        status: "paused",
         razorpaySubscriptionId: data.razorpaySubscriptionId,
-        trialStartDate: data.trialStartDate,
-        trialEndDate: data.trialEndDate,
-        currentPeriodStart: data.trialStartDate,
-        currentPeriodEnd: data.trialEndDate,
       })
       .returning({ id: subscriptions.id });
 
-    if (data.trialEndDate) {
-      await db
-        .update(salons)
-        .set({
-          planId: data.planId,
-          status: "trial",
-          readOnlyMode: false,
-          nextBillingDate: data.trialEndDate,
-          updatedAt: new Date(),
-        })
-        .where(eq(salons.id, salonId));
-    }
+    await db
+      .update(salons)
+      .set({
+        planId: data.planId,
+        status: "paused",
+        readOnlyMode: true,
+        nextBillingDate: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(salons.id, salonId));
 
     const [payment] = await db
       .insert(payments)
@@ -118,8 +107,6 @@ export async function createSubscriptionRecord(
         metadata: {
           razorpaySubscriptionId: data.razorpaySubscriptionId,
           planId: data.planId,
-          trialStartDate: data.trialStartDate?.toISOString() ?? null,
-          trialEndDate: data.trialEndDate?.toISOString() ?? null,
         },
       })
       .returning({ id: payments.id });
@@ -133,25 +120,11 @@ export async function createSubscriptionRecord(
   }
 }
 
-export async function getSubscriptionCheckoutState(razorpaySubscriptionId: string) {
-  const [subscription] = await db
-    .select({
-      planId: subscriptions.planId,
-      status: subscriptions.status,
-      trialEndDate: subscriptions.trialEndDate,
-    })
-    .from(subscriptions)
-    .where(eq(subscriptions.razorpaySubscriptionId, razorpaySubscriptionId))
-    .limit(1);
-
-  return subscription ?? null;
-}
-
 export async function updateSubscriptionFromRazorpay(params: {
   salonId: string;
   razorpaySubscriptionId: string;
   razorpayPaymentId: string;
-  status: "trial" | "active" | "past_due" | "overdue" | "expired" | "canceled";
+  status: "active" | "past_due" | "overdue" | "expired" | "canceled";
 }) {
   try {
     const [subscription] = await db
@@ -195,7 +168,7 @@ export async function updateSubscriptionFromRazorpay(params: {
         subscriptionId: subscription.id,
         amount: "0",
         provider: "Razorpay",
-        status: params.status === "active" ? "paid" : params.status === "trial" ? "created" : "failed",
+        status: params.status === "active" ? "paid" : "failed",
         razorpayPaymentId: params.razorpayPaymentId,
         paidAt: params.status === "active" ? new Date() : null,
         metadata: {
@@ -278,24 +251,6 @@ export async function markOverdueSubscriptions() {
       graceEndsAt: sql`now() + interval '3 day'`,
       updatedAt: new Date(),
     })
-    .where(and(eq(subscriptions.status, "trial"), sql`${subscriptions.trialEndDate} < now()`));
-
-  await db
-    .update(salons)
-    .set({
-      status: "past_due",
-      nextBillingDate: null,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(salons.status, "trial"), sql`${salons.nextBillingDate} < now()`));
-
-  await db
-    .update(subscriptions)
-    .set({
-      status: "past_due",
-      graceEndsAt: sql`now() + interval '3 day'`,
-      updatedAt: new Date(),
-    })
     .where(and(eq(subscriptions.status, "active"), sql`${subscriptions.currentPeriodEnd} < now()`));
 
   await db
@@ -359,71 +314,4 @@ export async function cancelCurrentSubscription(salonId: string) {
     .where(eq(salons.id, salonId));
 
   return { success: true, razorpaySubscriptionId: subscription.razorpaySubscriptionId ?? null };
-}
-
-export async function activatePremiumForTesting(salonId: string) {
-  const [subscription] = await db
-    .select({ id: subscriptions.id })
-    .from(subscriptions)
-    .where(eq(subscriptions.salonId, salonId))
-    .orderBy(desc(subscriptions.createdAt))
-    .limit(1);
-
-  const nextBillingDate = sql`now() + interval '30 day'`;
-
-  let subscriptionId = subscription?.id;
-
-  if (subscriptionId) {
-    await db
-      .update(subscriptions)
-      .set({
-        planId: "premium",
-        status: "active",
-        razorpaySubscriptionId: null,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: nextBillingDate,
-        graceEndsAt: null,
-        canceledAt: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(subscriptions.id, subscriptionId));
-  } else {
-    const [created] = await db
-      .insert(subscriptions)
-      .values({
-        salonId,
-        planId: "premium",
-        status: "active",
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: nextBillingDate,
-      })
-      .returning({ id: subscriptions.id });
-
-    subscriptionId = created.id;
-  }
-
-  await db
-    .update(salons)
-    .set({
-      planId: "premium",
-      status: "active",
-      readOnlyMode: false,
-      nextBillingDate,
-      updatedAt: new Date(),
-    })
-    .where(eq(salons.id, salonId));
-
-  await db.insert(payments).values({
-    salonId,
-    subscriptionId,
-    amount: "0",
-    provider: "Manual",
-    status: "paid",
-    paidAt: new Date(),
-    metadata: {
-      reason: "testing-premium-activation",
-    },
-  });
-
-  return { success: true };
 }

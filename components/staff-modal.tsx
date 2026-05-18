@@ -33,7 +33,6 @@ export function StaffModal({ readOnly }: { readOnly: boolean }) {
         name: String(form.get("name") ?? ""),
         roleLabel: String(form.get("roleLabel") ?? ""),
         commissionRate: Number(form.get("commissionRate") ?? 0),
-        attendanceRate: Number(form.get("attendanceRate") ?? 0),
       });
 
       if (!result.success) {
@@ -80,15 +79,9 @@ export function StaffModal({ readOnly }: { readOnly: boolean }) {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="commissionRate">Commission %</Label>
-              <Input id="commissionRate" name="commissionRate" type="number" min={0} max={100} defaultValue={0} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="attendanceRate">Attendance %</Label>
-              <Input id="attendanceRate" name="attendanceRate" type="number" min={0} max={100} defaultValue={100} required />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="commissionRate">Commission %</Label>
+            <Input id="commissionRate" name="commissionRate" type="number" min={0} max={100} defaultValue={0} required />
           </div>
 
           <div className="flex justify-end gap-2">

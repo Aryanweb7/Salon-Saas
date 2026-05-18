@@ -33,7 +33,7 @@ declare global {
 }
 
 interface SubscribeButtonProps {
-  planId: "basic" | "pro" | "premium";
+  planId: "basic" | "pro";
   isLoading?: boolean;
   className?: string;
 }
@@ -63,7 +63,7 @@ export function SubscribeButton({ planId, isLoading = false, className }: Subscr
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
         subscription_id: result.subscriptionId,
         name: "SalonFlow",
-        description: `${planId.toUpperCase()} plan - 14-day free trial, then monthly auto-renewal`,
+        description: `${planId.toUpperCase()} plan - monthly auto-renewal`,
         prefill: {
           name: result.salonName,
           email: result.email,
@@ -104,7 +104,7 @@ export function SubscribeButton({ planId, isLoading = false, className }: Subscr
       disabled={isLoading || !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID}
       className={cn(className)}
     >
-      {planId === "pro" ? "Start 14-Day Free Trial" : "Subscribe Now"}
+      {planId === "pro" ? "Start Pro Plan" : "Subscribe Now"}
     </Button>
   );
 }

@@ -14,7 +14,7 @@ export default async function StaffPage() {
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <h1 className="text-4xl font-semibold">Staff management</h1>
-          <p className="mt-2 text-[var(--muted-foreground)]">Roles, commission rates, attendance, and performance stats with plan-aware user caps.</p>
+          <p className="mt-2 text-[var(--muted-foreground)]">Roles, commission rates, and performance stats with plan-aware user caps.</p>
         </div>
         <StaffModal readOnly={session.readOnlyMode} />
       </div>
@@ -28,11 +28,7 @@ export default async function StaffPage() {
               </div>
               <Badge tone={member.commission > 0 ? "success" : "default"}>{member.commission}% commission</Badge>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-2xl bg-[var(--muted)] p-3">
-                <p className="text-[var(--muted-foreground)]">Attendance</p>
-                <p className="mt-1 text-lg font-semibold">{member.attendance}</p>
-              </div>
+            <div className="text-sm">
               <div className="rounded-2xl bg-[var(--muted)] p-3">
                 <p className="text-[var(--muted-foreground)]">Sales</p>
                 <p className="mt-1 text-lg font-semibold">{formatCurrency(member.sales)}</p>

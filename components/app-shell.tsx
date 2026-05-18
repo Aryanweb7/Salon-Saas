@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CreditCard,
   LayoutDashboard,
+  Megaphone,
   Settings,
   Sparkles,
   Users,
@@ -23,6 +24,7 @@ const ownerNav = [
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/appointments", label: "Appointments", icon: CalendarDays },
   { href: "/visits", label: "Visits", icon: Sparkles },
+  { href: "/marketing", label: "Marketing", icon: Megaphone },
   { href: "/staff", label: "Staff", icon: Users },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/billing", label: "Billing", icon: CreditCard },
@@ -36,7 +38,7 @@ export async function AppShell({
 }) {
   const session = await getSessionContext();
   const readOnlyReason = session.readOnlyMode ? getReadOnlyReason(session.subscriptionStatus) : null;
-  const hasActivePlan = session.subscriptionStatus === "active" || session.subscriptionStatus === "trial" || session.subscriptionStatus === "past_due";
+  const hasActivePlan = session.subscriptionStatus === "active" || session.subscriptionStatus === "past_due";
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">

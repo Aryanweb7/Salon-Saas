@@ -17,6 +17,13 @@ export default function ForgotPasswordPage() {
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      setError("Email is required");
+      return;
+    }
+
     setLoading(true);
     setMessage(null);
     setResetUrl(null);
@@ -25,7 +32,7 @@ export default function ForgotPasswordPage() {
     const response = await fetch("/api/auth/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email: normalizedEmail }),
     });
 
     const json = (await response.json().catch(() => null)) as { error?: string; resetUrl?: string } | null;
@@ -36,7 +43,7 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    setMessage("If an account exists for this email, a reset link has been created.");
+    setMessage("If an account exists for this email, a reset link has been sent.");
     setResetUrl(json?.resetUrl ?? null);
   }
 
@@ -52,7 +59,7 @@ export default function ForgotPasswordPage() {
         {message ? <Badge tone="success" className="w-fit">{message}</Badge> : null}
 
         <form className="space-y-3" onSubmit={onSubmit}>
-          <Input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" type="email" />
+          <Input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" type="email" required />
           <Button className="w-full" disabled={loading}>
             {loading ? "Creating link..." : "Create reset link"}
           </Button>

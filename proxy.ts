@@ -5,7 +5,7 @@ import { getToken } from "next-auth/jwt";
 const PUBLIC_PATHS = ["/", "/pricing", "/sign-in", "/sign-up", "/login", "/register", "/forgot-password", "/reset-password"];
 const PUBLIC_PREFIXES = ["/_next", "/api/health", "/api/webhooks/razorpay", "/api/cron"];
 const AUTH_API_PREFIXES = ["/api/auth", "/api/login"];
-const PROTECTED_PATHS = ["/dashboard", "/customers", "/appointments", "/visits", "/staff", "/reports", "/billing", "/settings"];
+const PROTECTED_PATHS = ["/dashboard", "/customers", "/appointments", "/visits", "/marketing", "/staff", "/reports", "/billing", "/settings"];
 
 function isPublicRoute(pathname: string) {
   return (

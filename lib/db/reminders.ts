@@ -282,3 +282,18 @@ export async function runDailyReminderAutomation() {
     failed: delivery.failed,
   };
 }
+
+export async function getMessagesSentThisMonthForSalon(salonId: string) {
+  try {
+    const [result] = await db
+      .select({
+        count: sql<number>`count(*) filter (where ${messages.createdAt} >= date_trunc('month', now()))`,
+      })
+      .from(messages)
+      .where(eq(messages.salonId, salonId));
+
+    return Number(result?.count ?? 0);
+  } catch {
+    return 0;
+  }
+}
