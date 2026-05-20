@@ -28,7 +28,7 @@ export default async function SettingsPage() {
           city={snapshot?.city ?? ""}
           config={config}
           brandingEnabled={snapshot?.brandingEnabled ?? false}
-          readOnly={session.readOnlyMode || !session.salonId}
+          readOnly={!session.salonId}
         />
       </Card>
     </div>

@@ -110,8 +110,8 @@ export async function POST(request: Request) {
         "payment.failed -> past_due",
         "subscription.activated -> active",
         "subscription.failed -> past_due",
-        "subscription.cancelled -> canceled + read-only",
-        "cron after 3 days -> overdue + read-only",
+        "subscription.cancelled -> downgrade to Free",
+        "cron after 3 days -> downgrade overdue paid plans to Free",
       ],
     });
   } catch (error) {

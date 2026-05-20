@@ -1,7 +1,6 @@
 import { Resend } from "resend";
 import { getSessionContext } from "@/lib/auth";
 import { getCampaignEmailsSentThisMonthForSalon, logCampaignEmail } from "@/lib/db/email-campaigns";
-import { getReadOnlyReason } from "@/lib/gating";
 import { PLAN_DEFINITIONS } from "@/lib/plans";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -12,13 +11,6 @@ export async function POST(req) {
 
     if (!session.salonId) {
       return Response.json({ error: "No salon is attached to this account." }, { status: 403 });
-    }
-
-    if (session.readOnlyMode) {
-      return Response.json(
-        { error: getReadOnlyReason(session.subscriptionStatus) ?? "Email sending is blocked in read-only mode." },
-        { status: 403 },
-      );
     }
 
     if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {

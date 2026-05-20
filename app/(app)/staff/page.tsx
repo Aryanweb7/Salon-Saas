@@ -16,7 +16,7 @@ export default async function StaffPage() {
           <h1 className="text-4xl font-semibold">Staff management</h1>
           <p className="mt-2 text-[var(--muted-foreground)]">Roles, commission rates, and performance stats with plan-aware user caps.</p>
         </div>
-        <StaffModal readOnly={session.readOnlyMode} />
+        <StaffModal readOnly={false} />
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         {staff.map((member) => (

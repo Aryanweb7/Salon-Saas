@@ -1,17 +1,8 @@
 import { checkPlanLimit, requireFeature } from "@/lib/gating";
-import { getReadOnlyReason } from "@/lib/gating";
 import { getSessionContext } from "@/lib/auth";
 
 export async function assertCanMutateWorkspace() {
   const session = await getSessionContext();
-
-  if (session.readOnlyMode) {
-    return {
-      allowed: false,
-      message: getReadOnlyReason(session.subscriptionStatus) ?? "Workspace is in read-only mode.",
-      session,
-    };
-  }
 
   return { allowed: true, message: null, session };
 }
@@ -22,10 +13,6 @@ export async function assertCanMutateCustomers() {
 
 export async function assertCanSendCampaign() {
   const session = await getSessionContext();
-
-  if (session.readOnlyMode) {
-    return { allowed: false, message: "Campaigns are blocked while the subscription is overdue." };
-  }
 
   const feature = requireFeature(session.planId, "birthdayCampaigns");
   return { allowed: feature.enabled, message: feature.message, session };

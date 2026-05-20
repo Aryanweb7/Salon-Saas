@@ -1,7 +1,7 @@
 import { fallbackSession } from "@/lib/fallback-data";
 import type { Role, SessionContext, SubscriptionStatus } from "@/lib/types";
 import { getServerSession } from "next-auth";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { salons, subscriptions, users } from "@/db/schema";
@@ -28,7 +28,6 @@ export async function getSessionContext(): Promise<SessionContext> {
         role: Role;
         subscriptionStatus: SubscriptionStatus | null;
         planId: "free" | "basic" | "pro" | null;
-        readOnlyMode: boolean | null;
         salonName: string | null;
       }
     | undefined;
@@ -43,14 +42,13 @@ export async function getSessionContext(): Promise<SessionContext> {
         role: users.role,
         subscriptionStatus: subscriptions.status,
         planId: subscriptions.planId,
-        readOnlyMode: salons.readOnlyMode,
         salonName: salons.name,
       })
       .from(users)
       .leftJoin(salons, eq(salons.id, users.salonId))
       .leftJoin(subscriptions, eq(subscriptions.salonId, users.salonId))
       .where(eq(users.id, authSession.user.id))
-      .orderBy(desc(subscriptions.createdAt))
+      .orderBy(sql`case when ${subscriptions.status} = 'paused' then 1 else 0 end`, desc(subscriptions.createdAt))
       .limit(1);
   } catch {
     console.warn("Could not refresh session context from the database. Using the signed-in session fallback.");
@@ -64,10 +62,10 @@ export async function getSessionContext(): Promise<SessionContext> {
       role: sessionUser.role ?? "SALON_OWNER",
       salonId: sessionUser.salonId ?? null,
       salonName: null,
-      email: authSession.user.email ?? null,
-      subscriptionStatus: "paused",
+        email: authSession.user.email ?? null,
+      subscriptionStatus: "active",
       planId: "free",
-      readOnlyMode: true,
+      readOnlyMode: false,
     };
   }
 
@@ -77,10 +75,6 @@ export async function getSessionContext(): Promise<SessionContext> {
 
   const subscriptionStatus = context.subscriptionStatus ?? "active";
   const planId = context.planId ?? "free";
-  const billingReadOnly = isReadOnlyStatus(subscriptionStatus);
-  const manualReadOnly = subscriptionStatus === "active" || subscriptionStatus === "past_due"
-    ? false
-    : (context.readOnlyMode ?? false);
 
   return {
     user: { id: context.id, email: context.email, name: context.name },
@@ -90,12 +84,12 @@ export async function getSessionContext(): Promise<SessionContext> {
     email: context.email,
     subscriptionStatus,
     planId,
-    readOnlyMode: manualReadOnly || billingReadOnly,
+    readOnlyMode: false,
   };
 }
 
 export function isReadOnlyStatus(status: SubscriptionStatus) {
-  return status === "overdue" || status === "expired" || status === "canceled";
+  return false;
 }
 
 export function assertRole(session: SessionContext, allowedRoles: Role[]) {

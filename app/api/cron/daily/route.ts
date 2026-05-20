@@ -12,8 +12,7 @@ export async function POST() {
       success: true,
       jobs: [
         "check due subscriptions",
-        "mark overdue accounts",
-        "activate read-only mode",
+        "downgrade overdue paid accounts to Free",
         "queue WhatsApp reminders",
         "send birthday messages",
         "run billing health checks",

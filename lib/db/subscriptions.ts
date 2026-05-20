@@ -3,6 +3,37 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { payments, salons, subscriptions } from "@/db/schema";
 
+async function downgradeSalonToFree(salonId: string) {
+  await db
+    .update(salons)
+    .set({
+      planId: "free",
+      status: "active",
+      readOnlyMode: false,
+      nextBillingDate: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(salons.id, salonId));
+
+  const [latestSubscription] = await db
+    .select({ planId: subscriptions.planId, status: subscriptions.status })
+    .from(subscriptions)
+    .where(eq(subscriptions.salonId, salonId))
+    .orderBy(desc(subscriptions.createdAt))
+    .limit(1);
+
+  if (latestSubscription?.planId === "free" && latestSubscription.status === "active") {
+    return;
+  }
+
+  await db.insert(subscriptions).values({
+    salonId,
+    planId: "free",
+    status: "active",
+    currentPeriodStart: new Date(),
+  });
+}
+
 export async function getSalonSubscription(salonId: string) {
   try {
     const [row] = await db
@@ -13,7 +44,7 @@ export async function getSalonSubscription(salonId: string) {
       })
       .from(subscriptions)
       .where(eq(subscriptions.salonId, salonId))
-      .orderBy(desc(subscriptions.createdAt))
+      .orderBy(sql`case when ${subscriptions.status} = 'paused' then 1 else 0 end`, desc(subscriptions.createdAt))
       .limit(1);
 
     return row ?? { planId: "free" as const, status: "active" as const, renewalDate: null };
@@ -32,13 +63,12 @@ export async function getBillingSnapshot(salonId: string) {
         renewalDate: subscriptions.currentPeriodEnd,
         graceEndsAt: subscriptions.graceEndsAt,
         razorpaySubscriptionId: subscriptions.razorpaySubscriptionId,
-        readOnlyMode: salons.readOnlyMode,
         nextBillingDate: salons.nextBillingDate,
       })
       .from(subscriptions)
       .innerJoin(salons, eq(salons.id, subscriptions.salonId))
       .where(eq(subscriptions.salonId, salonId))
-      .orderBy(desc(subscriptions.createdAt))
+      .orderBy(sql`case when ${subscriptions.status} = 'paused' then 1 else 0 end`, desc(subscriptions.createdAt))
       .limit(1);
 
     return row ?? null;
@@ -84,17 +114,6 @@ export async function createSubscriptionRecord(
         razorpaySubscriptionId: data.razorpaySubscriptionId,
       })
       .returning({ id: subscriptions.id });
-
-    await db
-      .update(salons)
-      .set({
-        planId: data.planId,
-        status: "paused",
-        readOnlyMode: true,
-        nextBillingDate: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(salons.id, salonId));
 
     const [payment] = await db
       .insert(payments)
@@ -150,16 +169,20 @@ export async function updateSubscriptionFromRazorpay(params: {
       })
       .where(eq(subscriptions.id, subscription.id));
 
-    await db
-      .update(salons)
-      .set({
-        status: params.status,
-        planId: subscription.planId,
-        readOnlyMode: params.status === "overdue" || params.status === "expired" || params.status === "canceled",
-        nextBillingDate: params.status === "active" ? sql`now() + interval '30 day'` : undefined,
-        updatedAt: new Date(),
-      })
-      .where(eq(salons.id, params.salonId));
+    if (params.status === "overdue" || params.status === "expired" || params.status === "canceled") {
+      await downgradeSalonToFree(params.salonId);
+    } else {
+      await db
+        .update(salons)
+        .set({
+          status: params.status,
+          planId: subscription.planId,
+          readOnlyMode: false,
+          nextBillingDate: params.status === "active" ? sql`now() + interval '30 day'` : undefined,
+          updatedAt: new Date(),
+        })
+        .where(eq(salons.id, params.salonId));
+    }
 
     await db
       .insert(payments)
@@ -218,15 +241,26 @@ export async function updateSubscriptionStatusFromPayment(params: {
     })
     .where(eq(subscriptions.id, subscription.id));
 
-  await db
-    .update(salons)
-    .set({
-      status: params.status,
-      readOnlyMode: params.status === "overdue" || params.status === "expired" || params.status === "canceled",
-      nextBillingDate: params.status === "active" ? sql`now() + interval '30 day'` : null,
-      updatedAt: new Date(),
-    })
-    .where(eq(salons.id, salonId));
+  if (params.status === "overdue" || params.status === "expired" || params.status === "canceled") {
+    await downgradeSalonToFree(salonId);
+  } else {
+    const [updatedSubscription] = await db
+      .select({ planId: subscriptions.planId })
+      .from(subscriptions)
+      .where(eq(subscriptions.id, subscription.id))
+      .limit(1);
+
+    await db
+      .update(salons)
+      .set({
+        status: params.status,
+        planId: params.status === "active" ? updatedSubscription?.planId : undefined,
+        readOnlyMode: false,
+        nextBillingDate: params.status === "active" ? sql`now() + interval '30 day'` : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(salons.id, salonId));
+  }
 
   if (params.paymentId || params.paidAmount) {
     await db.insert(payments).values({
@@ -262,19 +296,19 @@ export async function markOverdueSubscriptions() {
     })
     .where(and(eq(salons.status, "active"), sql`${salons.nextBillingDate} < now()`));
 
-  await db
-    .update(subscriptions)
-    .set({ status: "overdue", updatedAt: new Date() })
+  const overdueRows = await db
+    .select({ id: subscriptions.id, salonId: subscriptions.salonId })
+    .from(subscriptions)
     .where(and(eq(subscriptions.status, "past_due"), sql`${subscriptions.graceEndsAt} < now()`));
 
-  await db
-    .update(salons)
-    .set({
-      status: "overdue",
-      readOnlyMode: true,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(salons.status, "past_due"), sql`${salons.updatedAt} < now() - interval '3 day'`));
+  for (const row of overdueRows) {
+    await db
+      .update(subscriptions)
+      .set({ status: "overdue", updatedAt: new Date() })
+      .where(eq(subscriptions.id, row.id));
+
+    await downgradeSalonToFree(row.salonId);
+  }
 }
 
 export async function cancelCurrentSubscription(salonId: string) {
@@ -302,16 +336,7 @@ export async function cancelCurrentSubscription(salonId: string) {
     })
     .where(eq(subscriptions.id, subscription.id));
 
-  await db
-    .update(salons)
-    .set({
-      status: "canceled",
-      readOnlyMode: true,
-      planId: subscription.planId,
-      nextBillingDate: null,
-      updatedAt: new Date(),
-    })
-    .where(eq(salons.id, salonId));
+  await downgradeSalonToFree(salonId);
 
   return { success: true, razorpaySubscriptionId: subscription.razorpaySubscriptionId ?? null };
 }

@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { getSessionContext } from "@/lib/auth";
 import { listRecentPaymentsForSalon } from "@/lib/db/salons";
 import { getBillingSnapshot } from "@/lib/db/subscriptions";
-import { getReadOnlyReason } from "@/lib/gating";
 import { PLAN_DEFINITIONS } from "@/lib/plans";
 import { formatCurrency } from "@/lib/utils";
 
@@ -24,11 +23,11 @@ function getStatusTone(status: string) {
 
 function getStatusCopy(status: string) {
   if (status === "active") return "Billing is healthy and your workspace is fully editable.";
-  if (status === "past_due") return "A payment is overdue. The grace window is active before the workspace locks.";
-  if (status === "overdue") return "The grace window has ended and the workspace is locked in read-only mode.";
-  if (status === "expired") return "This subscription has expired. Renew to regain write access.";
-  if (status === "canceled") return "This subscription is canceled. Start a new payment to restore access.";
-  if (status === "paused") return "Your workspace is read-only until a paid subscription is active.";
+  if (status === "past_due") return "A payment is overdue. The grace window is active before this workspace moves to the Free plan.";
+  if (status === "overdue") return "The grace window has ended, so this workspace now uses the Free plan limits.";
+  if (status === "expired") return "This paid subscription has expired. The workspace remains available on the Free plan.";
+  if (status === "canceled") return "This paid subscription is canceled. The workspace remains available on the Free plan.";
+  if (status === "paused") return "A paid checkout was started but has not been activated yet.";
   return `Current status: ${status}`;
 }
 
@@ -50,7 +49,6 @@ export default async function BillingPage() {
   const status = billing?.status ?? session.subscriptionStatus;
   const hasActivePlan = status === "active" || status === "past_due";
   const currentPlan = hasActivePlan ? PLAN_DEFINITIONS[planId] : null;
-  const readOnlyReason = session.readOnlyMode ? getReadOnlyReason(status) : null;
   const canCancelSubscription = planId !== "free" && (status === "active" || status === "past_due");
 
   return (
@@ -110,9 +108,9 @@ export default async function BillingPage() {
           <div className="flex items-start gap-3">
             <Lock className="mt-0.5 h-5 w-5 text-[var(--danger)]" />
             <div>
-              <p className="font-medium">Read-only lock</p>
+              <p className="font-medium">Plan downgrade</p>
               <p className="text-sm text-[var(--muted-foreground)]">
-                {readOnlyReason ?? "Editing remains available while billing is active or inside the grace window."}
+                Workspaces are not locked for billing. If payment stays overdue after the grace window, the plan changes to Free and existing data is preserved.
               </p>
             </div>
           </div>

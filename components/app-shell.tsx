@@ -16,7 +16,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getSessionContext } from "@/lib/auth";
-import { getReadOnlyReason } from "@/lib/gating";
 import { LogoutButton } from "@/components/logout-button";
 
 const ownerNav = [
@@ -37,7 +36,6 @@ export async function AppShell({
   children: React.ReactNode;
 }) {
   const session = await getSessionContext();
-  const readOnlyReason = session.readOnlyMode ? getReadOnlyReason(session.subscriptionStatus) : null;
   const hasActivePlan = session.subscriptionStatus === "active" || session.subscriptionStatus === "past_due";
 
   return (
@@ -98,19 +96,6 @@ export async function AppShell({
       </aside>
 
       <main className="p-4 md:p-8">
-        {readOnlyReason ? (
-          <Card className="mb-6 border-[var(--danger)]/30 bg-[color-mix(in_srgb,var(--danger)_12%,transparent)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--danger)]">
-                  Read-only mode
-                </p>
-                <p className="mt-2 text-sm text-[var(--muted-foreground)]">{readOnlyReason}</p>
-              </div>
-              <Badge tone="danger">{session.subscriptionStatus.replace("_", " ")}</Badge>
-            </div>
-          </Card>
-        ) : null}
         {children}
       </main>
     </div>

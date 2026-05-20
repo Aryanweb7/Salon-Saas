@@ -7,7 +7,6 @@ import { customers } from "@/db/schema";
 import { getSessionContext } from "@/lib/auth";
 import { getCampaignEmailsSentThisMonthForSalon, logCampaignEmail } from "@/lib/db/email-campaigns";
 import { sendMarketingEmail } from "@/lib/email";
-import { getReadOnlyReason } from "@/lib/gating";
 import { PLAN_DEFINITIONS } from "@/lib/plans";
 
 const campaignSchema = z.object({
@@ -57,13 +56,6 @@ export async function POST(request: Request) {
 
   if (!session.salonId) {
     return NextResponse.json({ error: "No salon is attached to this account." }, { status: 403 });
-  }
-
-  if (session.readOnlyMode) {
-    return NextResponse.json(
-      { error: getReadOnlyReason(session.subscriptionStatus) ?? "Marketing campaigns are blocked in read-only mode." },
-      { status: 403 },
-    );
   }
 
   const body = await request.json().catch(() => null);

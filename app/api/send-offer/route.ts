@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { customers, messages, salons, users } from "@/db/schema";
+import { customers, messages, users } from "@/db/schema";
 import { authOptions } from "@/lib/auth/options";
 import { sendWhatsAppMessage, WHATSAPP_PROVIDER } from "@/lib/messaging";
 
@@ -49,11 +49,8 @@ async function getRequiredSalonContext() {
   const [user] = await db
     .select({
       salonId: users.salonId,
-      readOnlyMode: salons.readOnlyMode,
-      status: salons.status,
     })
     .from(users)
-    .leftJoin(salons, eq(salons.id, users.salonId))
     .where(eq(users.id, session.user.id))
     .limit(1);
 
@@ -61,11 +58,6 @@ async function getRequiredSalonContext() {
 
   return {
     salonId: user.salonId,
-    readOnlyMode:
-      user.status === "overdue" ||
-      user.status === "expired" ||
-      user.status === "canceled" ||
-      (user.status !== "active" && user.status !== "past_due" && Boolean(user.readOnlyMode)),
   };
 }
 
@@ -74,10 +66,6 @@ export async function POST(request: Request) {
 
   if (!context) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (context.readOnlyMode) {
-    return NextResponse.json({ error: "WhatsApp campaigns are blocked in read-only mode" }, { status: 403 });
   }
 
   const { salonId } = context;

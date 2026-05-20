@@ -21,7 +21,7 @@ export default async function AppointmentsPage() {
           <h1 className="text-4xl font-semibold">Appointments</h1>
           <p className="mt-2 text-[var(--muted-foreground)]">List and calendar views, walk-ins, reschedules, and staff assignment all live here.</p>
         </div>
-        <AppointmentBookingModal customers={options.customers} staff={options.staff} readOnly={session.readOnlyMode} />
+        <AppointmentBookingModal customers={options.customers} staff={options.staff} readOnly={false} />
       </div>
 
       <AppointmentsCalendar appointments={appointments} />
@@ -38,7 +38,7 @@ export default async function AppointmentsPage() {
             </div>
             <p className="text-sm text-[var(--muted-foreground)]">{appointment.time} - Assigned to {appointment.staff}</p>
             {appointment.notes ? <p className="text-sm text-[var(--muted-foreground)]">{appointment.notes}</p> : null}
-            <AppointmentCardActions appointment={appointment} staff={options.staff} readOnly={session.readOnlyMode} />
+            <AppointmentCardActions appointment={appointment} staff={options.staff} readOnly={false} />
           </Card>
         ))}
       </div>
