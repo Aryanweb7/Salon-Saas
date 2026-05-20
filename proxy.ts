@@ -30,7 +30,19 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET });
+  const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+  const token =
+    (await getToken({
+      req: request,
+      secret,
+      cookieName: "__Secure-next-auth.session-token",
+    })) ??
+    (await getToken({
+      req: request,
+      secret,
+      cookieName: "next-auth.session-token",
+    }));
+
   if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
