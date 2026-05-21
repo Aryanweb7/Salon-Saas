@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getIndiaDateKey, getIndiaTimeInputValue } from "@/lib/india-time";
 
 type StaffOption = {
   id: string;
@@ -38,11 +39,11 @@ type AppointmentActionData = {
 };
 
 function dateValue(startAt: string) {
-  return new Date(startAt).toISOString().slice(0, 10);
+  return getIndiaDateKey(new Date(startAt));
 }
 
 function timeValue(startAt: string) {
-  return new Date(startAt).toTimeString().slice(0, 5);
+  return getIndiaTimeInputValue(new Date(startAt));
 }
 
 function durationValue(startAt: string, endAt: string | null) {
@@ -103,10 +104,10 @@ export function AppointmentCardActions({
   return (
     <div className="space-y-2">
       {error ? <p className="text-sm text-[var(--danger)]">{error}</p> : null}
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm" disabled={readOnly || isLocked}>
+            <Button className="w-full sm:w-auto" variant="outline" size="sm" disabled={readOnly || isLocked}>
               Reschedule
             </Button>
           </DialogTrigger>
@@ -160,17 +161,17 @@ export function AppointmentCardActions({
                 <Textarea id={`notes-${appointment.id}`} name="notes" defaultValue={appointment.notes} />
               </div>
 
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button className="w-full sm:w-auto" type="button" variant="outline" onClick={() => setOpen(false)}>
                   Close
                 </Button>
-                <Button disabled={isPending}>{isPending ? "Saving..." : "Save"}</Button>
+                <Button className="w-full sm:w-auto" disabled={isPending}>{isPending ? "Saving..." : "Save"}</Button>
               </div>
             </form>
           </DialogContent>
         </Dialog>
 
-        <Button variant="ghost" size="sm" disabled={readOnly || isPending || isLocked} onClick={onCancel}>
+        <Button className="w-full sm:w-auto" variant="ghost" size="sm" disabled={readOnly || isPending || isLocked} onClick={onCancel}>
           {isPending ? "Working..." : "Cancel"}
         </Button>
       </div>

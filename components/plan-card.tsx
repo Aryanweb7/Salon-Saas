@@ -11,15 +11,18 @@ export function PlanCard({ planId }: { planId: keyof typeof PLAN_DEFINITIONS }) 
 
   return (
     <Card className="relative flex h-full flex-col gap-5">
-      {plan.mostPopular ? <Badge className="absolute right-6 top-6" tone="warning">Most Popular</Badge> : null}
-      <div>
+      {plan.mostPopular ? <Badge className="w-fit sm:absolute sm:right-6 sm:top-6" tone="warning">Most Popular</Badge> : null}
+      <div className="min-w-0">
         <h3 className="text-2xl font-semibold">{plan.name}</h3>
-        <p className="mt-2 text-4xl font-bold">{formatCurrency(plan.price)}<span className="text-base font-normal text-[var(--muted-foreground)]">/month</span></p>
+        <p className="mt-2 break-words text-3xl font-bold sm:text-4xl">{formatCurrency(plan.price)}<span className="text-base font-normal text-[var(--muted-foreground)]">/month</span></p>
       </div>
       <ul className="space-y-3 text-sm text-[var(--muted-foreground)]">
-        <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 text-[var(--success)]" /> {plan.staffLimit ?? "Unlimited"} staff users</li>
-        <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 text-[var(--success)]" /> {plan.customerLimit ?? "Unlimited"} customers</li>
-        <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 text-[var(--success)]" /> {plan.emailLimit ?? "Unlimited"} campaign emails/month</li>
+        <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" /> <span>{plan.staffLimit ?? "Unlimited"} staff users</span></li>
+        <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" /> <span>{plan.customerLimit ?? "Unlimited"} customers/month</span></li>
+        <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" /> <span>{plan.emailLimit ?? "Unlimited"} campaign emails/month</span></li>
+        {plan.features.birthdayCampaigns ? (
+          <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" /> <span>Birthday-only campaigns</span></li>
+        ) : null}
       </ul>
       <div className="mt-auto space-y-3">
         {planId === "free" ? (

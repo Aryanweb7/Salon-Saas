@@ -33,9 +33,11 @@ interface Visit {
 export function VisitsClient({
   initialCustomers,
   initialVisits,
+  readOnly,
 }: {
   initialCustomers: Customer[];
   initialVisits: Visit[];
+  readOnly: boolean;
 }) {
   const [visits, setVisits] = useState<Visit[]>(initialVisits);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -57,15 +59,15 @@ export function VisitsClient({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <h1 className="text-4xl font-semibold">Visit history & billing</h1>
+        <div className="min-w-0">
+          <h1 className="text-3xl font-semibold sm:text-4xl">Visit history & billing</h1>
           <p className="mt-2 text-[var(--muted-foreground)]">Track every service sold, payment method used, and team member attached to revenue.</p>
         </div>
         {initialCustomers.length > 0 ? (
           <VisitModal
-            trigger={<Button>Record Visit</Button>}
+            trigger={<Button className="w-full sm:w-auto" disabled={readOnly}>Record Visit</Button>}
             title="Record a Visit"
             description="Add a new customer visit and services"
             customers={initialCustomers}
@@ -79,7 +81,7 @@ export function VisitsClient({
         <CardDescription className="mb-4">
           {visits.length} visit{visits.length !== 1 ? "s" : ""}
         </CardDescription>
-        <Table>
+        <Table className="min-w-[720px]">
           <THead>
             <TR>
               <TH>Service</TH>

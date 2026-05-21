@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getIndiaDateKey } from "@/lib/india-time";
 
 type Option = {
   id: string;
@@ -44,7 +45,7 @@ export function AppointmentBookingModal({
   const [customerQuery, setCustomerQuery] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [isPending, startTransition] = useTransition();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getIndiaDateKey();
   const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId);
   const filteredCustomers = useMemo(() => {
     const query = customerQuery.trim().toLowerCase();
@@ -91,7 +92,7 @@ export function AppointmentBookingModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button disabled={readOnly}>
+        <Button className="w-full sm:w-auto" disabled={readOnly}>
           <Plus className="mr-2 h-4 w-4" />
           Create Booking
         </Button>
@@ -129,7 +130,7 @@ export function AppointmentBookingModal({
                       setSelectedCustomerId("");
                       setCustomerQuery("");
                     }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition hover:bg-[var(--muted)]"
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm hover:bg-[var(--muted)]"
                   >
                     <span>Walk-in customer</span>
                     {!selectedCustomerId ? <span className="text-xs text-[var(--muted-foreground)]">Selected</span> : null}
@@ -142,7 +143,7 @@ export function AppointmentBookingModal({
                         setSelectedCustomerId(customer.id);
                         setCustomerQuery(customer.name);
                       }}
-                      className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-[var(--muted)]"
+                      className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm hover:bg-[var(--muted)]"
                     >
                       <span className="min-w-0">
                         <span className="block truncate font-medium">{customer.name}</span>
@@ -219,11 +220,11 @@ export function AppointmentBookingModal({
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button className="w-full sm:w-auto" type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button disabled={isPending}>
+            <Button className="w-full sm:w-auto" disabled={isPending}>
               {isPending ? "Creating..." : "Save booking"}
             </Button>
           </div>

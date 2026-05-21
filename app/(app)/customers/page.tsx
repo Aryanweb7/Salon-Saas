@@ -6,5 +6,5 @@ export default async function CustomersPage() {
   const session = await getSessionContext();
   const customers = session.salonId ? await listCustomersForSalon(session.salonId) : [];
 
-  return <CustomersClient initialCustomers={customers} />;
+  return <CustomersClient initialCustomers={customers} readOnly={false} />;
 }

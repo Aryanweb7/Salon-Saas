@@ -51,12 +51,12 @@ export function AppointmentsCalendar({ appointments }: { appointments: Appointme
 
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div>
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div className="min-w-0">
           <h2 className="text-2xl font-semibold">Calendar</h2>
           <p className="text-sm text-[var(--muted-foreground)]">This week&apos;s bookings grouped by day.</p>
         </div>
-        <Button variant="outline" onClick={() => setCalendarOpen((value) => !value)}>
+        <Button className="w-full sm:w-auto" variant="outline" onClick={() => setCalendarOpen((value) => !value)}>
           <CalendarRange className="mr-2 h-4 w-4" />
           {calendarOpen ? "Hide Calendar" : "Calendar View"}
         </Button>
@@ -79,7 +79,7 @@ export function AppointmentsCalendar({ appointments }: { appointments: Appointme
                   {dayAppointments.length ? (
                     dayAppointments.map((appointment) => (
                       <div key={appointment.id} className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 p-2">
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-xs font-semibold">{appointment.time}</p>
                           <Badge tone={appointment.status === "Pending" ? "warning" : "success"}>{appointment.status}</Badge>
                         </div>

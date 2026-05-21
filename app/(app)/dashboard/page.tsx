@@ -1,16 +1,20 @@
+import { unstable_noStore as noStore } from "next/cache";
+
 import { AppointmentsChart } from "@/components/charts/appointments-chart";
 import { RevenueChart } from "@/components/charts/revenue-chart";
 import { MetricCard } from "@/components/metric-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { getSessionContext } from "@/lib/auth";
-import { getAppointmentSeries, getDashboardAppointmentStats, listAppointmentsForSalon } from "@/lib/db/appointments";
+import { getAppointmentSeries, getDashboardAppointmentStats, listTodaysAppointmentsForSalon } from "@/lib/db/appointments";
 import { getCustomerStats } from "@/lib/db/customers";
 import { getRevenueSeries } from "@/lib/db/reports";
 import { getStaffDashboardStats } from "@/lib/db/staff";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 export default async function DashboardPage() {
+  noStore();
+
   const session = await getSessionContext();
   const salonId = session.salonId ?? "";
   const [customerStats, appointmentStats, revenueSeries, appointmentSeries, appointments, staffStats] = await Promise.all([
@@ -18,15 +22,15 @@ export default async function DashboardPage() {
     getDashboardAppointmentStats(salonId),
     getRevenueSeries(salonId),
     getAppointmentSeries(salonId),
-    listAppointmentsForSalon(salonId),
+    listTodaysAppointmentsForSalon(salonId),
     getStaffDashboardStats(salonId),
   ]);
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Owner dashboard</p>
-          <h1 className="text-4xl font-semibold">Today&apos;s salon pulse</h1>
+          <h1 className="text-3xl font-semibold sm:text-4xl">Today&apos;s salon pulse</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Badge tone="success">All automations healthy</Badge>
@@ -42,12 +46,12 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
-        <Card>
+        <Card className="min-w-0">
           <CardTitle>Revenue growth</CardTitle>
           <CardDescription className="mb-4">Daily and monthly collections across visits and retail add-ons.</CardDescription>
           <RevenueChart data={revenueSeries} />
         </Card>
-        <Card>
+        <Card className="min-w-0">
           <CardTitle>Weekly booking demand</CardTitle>
           <CardDescription className="mb-4">Use staffing and walk-in forecasting to fill slow slots.</CardDescription>
           <AppointmentsChart data={appointmentSeries} />
@@ -62,12 +66,12 @@ export default async function DashboardPage() {
           </div>
           <div className="space-y-3">
             {appointments.map((appointment) => (
-              <div key={`${appointment.customer}-${appointment.time}`} className="flex flex-col justify-between gap-3 rounded-3xl border p-4 md:flex-row md:items-center">
-                <div>
-                  <p className="font-medium">{appointment.customer}</p>
-                  <p className="text-sm text-[var(--muted-foreground)]">{appointment.service} with {appointment.staff}</p>
+              <div key={appointment.id} className="flex min-w-0 flex-col justify-between gap-3 rounded-2xl border p-4 md:flex-row md:items-center">
+                <div className="min-w-0">
+                  <p className="break-words font-medium">{appointment.customer}</p>
+                  <p className="break-words text-sm text-[var(--muted-foreground)]">{appointment.service} with {appointment.staff}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex shrink-0 flex-wrap items-center gap-3">
                   <span className="text-sm text-[var(--muted-foreground)]">{appointment.time}</span>
                   <Badge tone={appointment.status === "Pending" ? "warning" : "success"}>{appointment.status}</Badge>
                 </div>

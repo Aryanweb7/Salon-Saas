@@ -37,7 +37,7 @@ export default async function BillingPage() {
   if (!session.salonId) {
     return (
       <div className="space-y-4">
-        <h1 className="text-4xl font-semibold">Billing</h1>
+        <h1 className="text-3xl font-semibold sm:text-4xl">Billing</h1>
         <p className="text-[var(--muted-foreground)]">No salon is attached to this account.</p>
       </div>
     );
@@ -52,9 +52,9 @@ export default async function BillingPage() {
   const canCancelSubscription = planId !== "free" && (status === "active" || status === "past_due");
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-4xl font-semibold">Billing</h1>
+    <div className="min-w-0 space-y-6">
+      <div className="min-w-0">
+        <h1 className="text-3xl font-semibold sm:text-4xl">Billing</h1>
         <p className="mt-2 text-[var(--muted-foreground)]">
           Review subscription health, see upcoming charges, and manage plan changes.
         </p>
@@ -62,12 +62,12 @@ export default async function BillingPage() {
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr_1fr]">
         <Card className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <Badge tone={hasActivePlan ? "success" : "danger"}>{hasActivePlan ? "Current plan" : "No active plan"}</Badge>
             <Badge tone={getStatusTone(status)}>{status.replace("_", " ")}</Badge>
           </div>
           <div>
-            <h2 className="text-3xl font-semibold">{currentPlan?.name ?? (status === "paused" ? "No active subscription" : "Subscription canceled")}</h2>
+            <h2 className="break-words text-2xl font-semibold sm:text-3xl">{currentPlan?.name ?? (status === "paused" ? "No active subscription" : "Subscription canceled")}</h2>
             <p className="mt-2 text-[var(--muted-foreground)]">
               {currentPlan ? `${formatCurrency(currentPlan.price)} monthly` : "Subscribe to unlock full access."}
             </p>
@@ -123,12 +123,12 @@ export default async function BillingPage() {
           </div>
           {payments.length ? (
             payments.map((payment) => (
-              <div key={`${payment.salon}-${payment.date}-${payment.amount}`} className="flex items-center justify-between rounded-2xl border p-4">
-                <div>
+              <div key={`${payment.salon}-${payment.date}-${payment.amount}`} className="flex flex-col justify-between gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center">
+                <div className="min-w-0">
                   <p className="font-medium">{payment.date}</p>
                   <p className="text-sm text-[var(--muted-foreground)]">{payment.method}</p>
                 </div>
-                <div className="text-right">
+                <div className="sm:text-right">
                   <p className="font-semibold">{formatCurrency(payment.amount)}</p>
                   <Badge tone={payment.status === "Paid" ? "success" : payment.status === "Failed" ? "danger" : "default"}>
                     {payment.status}

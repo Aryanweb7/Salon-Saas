@@ -13,5 +13,5 @@ export default async function VisitsPage() {
       ])
     : [[], []];
 
-  return <VisitsClient initialCustomers={customers} initialVisits={visits} />;
+  return <VisitsClient initialCustomers={customers} initialVisits={visits} readOnly={false} />;
 }

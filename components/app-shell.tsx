@@ -36,21 +36,21 @@ export async function AppShell({
   children: React.ReactNode;
 }) {
   const session = await getSessionContext();
-  const hasActivePlan = session.subscriptionStatus === "active" || session.subscriptionStatus === "past_due";
+  const hasPaidPlan = session.planId !== "free";
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-      <aside className="border-r border-[var(--border)] bg-[color-mix(in_srgb,var(--background)_72%,transparent)] p-5">
+    <div className="grid min-h-screen min-w-0 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <aside className="border-b border-[var(--border)] bg-[var(--background)] p-4 lg:border-b-0 lg:border-r lg:p-5">
         {/* Brand */}
-        <Card className="mb-5 bg-[linear-gradient(135deg,rgba(181,93,51,0.18),rgba(31,59,53,0.18))]">
+        <Card className="mb-4 lg:mb-5">
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-[var(--foreground)]/10 p-3">
+            <div className="shrink-0 rounded-2xl bg-[var(--foreground)]/10 p-3">
               <WandSparkles className="h-5 w-5" />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <p className="text-lg font-semibold">SalonFlow</p>
-              <p className="text-sm text-[var(--muted-foreground)]">
+              <p className="truncate text-sm text-[var(--muted-foreground)]">
                 Run, retain, and scale every chair.
               </p>
             </div>
@@ -58,7 +58,7 @@ export async function AppShell({
         </Card>
 
         {/* Navigation */}
-        <div className="mb-5 space-y-1">
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-1 lg:mb-5 lg:block lg:space-y-1 lg:overflow-visible lg:pb-0">
           {ownerNav.map((item) => {
             const Icon = item.icon;
 
@@ -66,7 +66,7 @@ export async function AppShell({
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition hover:bg-[var(--muted)]"
+                className="flex shrink-0 items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium lg:shrink"
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
@@ -76,17 +76,19 @@ export async function AppShell({
         </div>
 
         {/* User Profile */}
-        <Card className="space-y-3 p-5">
-          <div className="min-w-0">
-            <p className="truncate font-medium">{session.salonName ?? "Salon"}</p>
-            <p className="truncate text-sm text-[var(--muted-foreground)]">
-              {session.user?.email ?? session.email ?? ""}
-            </p>
-          </div>
+        <Card className="space-y-3 p-4 lg:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:flex-col lg:items-start">
+            <div className="min-w-0">
+              <p className="truncate font-medium">{session.salonName ?? "Salon"}</p>
+              <p className="truncate text-sm text-[var(--muted-foreground)]">
+                {session.user?.email ?? session.email ?? ""}
+              </p>
+            </div>
 
-          <Badge className="w-fit" tone={hasActivePlan ? "success" : "danger"}>
-            {hasActivePlan ? `Plan: ${session.planId}` : `Subscription: ${session.subscriptionStatus.replace("_", " ")}`}
-          </Badge>
+            <Badge className="w-fit" tone={hasPaidPlan ? "success" : "default"}>
+              Plan: {session.planId}
+            </Badge>
+          </div>
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <ThemeToggle />
@@ -95,7 +97,7 @@ export async function AppShell({
         </Card>
       </aside>
 
-      <main className="p-4 md:p-8">
+      <main className="min-w-0 overflow-x-hidden p-4 md:p-8">
         {children}
       </main>
     </div>

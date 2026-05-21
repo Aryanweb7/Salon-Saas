@@ -22,7 +22,7 @@ export function TableFooter({ className, ...props }: React.HTMLAttributes<HTMLTa
 }
 
 export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("border-b transition-colors hover:bg-[var(--muted)]/50 data-[state=selected]:bg-[var(--muted)]", className)} {...props} />;
+  return <tr className={cn("border-b hover:bg-[var(--muted)]/50 data-[state=selected]:bg-[var(--muted)]", className)} {...props} />;
 }
 
 export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {

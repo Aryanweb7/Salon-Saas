@@ -7,6 +7,7 @@ import { customers } from "@/db/schema";
 import { getSessionContext } from "@/lib/auth";
 import { getCampaignEmailsSentThisMonthForSalon, logCampaignEmail } from "@/lib/db/email-campaigns";
 import { sendMarketingEmail } from "@/lib/email";
+import { requireFeature } from "@/lib/gating";
 import { PLAN_DEFINITIONS } from "@/lib/plans";
 
 const campaignSchema = z.object({
@@ -65,6 +66,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid campaign" }, { status: 400 });
   }
 
+  if (parsed.data.audience === "birthday") {
+    const feature = requireFeature(session.planId, "birthdayCampaigns");
+
+    if (!feature.enabled) {
+      return NextResponse.json({ error: "Birthday-only campaigns are available on Pro.", upgradeRequired: true }, { status: 403 });
+    }
+  }
+
   const emailLimit = PLAN_DEFINITIONS[session.planId].emailLimit;
   const emailsSentThisMonth = await getCampaignEmailsSentThisMonthForSalon(session.salonId);
   const remainingEmails = emailLimit === null ? Number.POSITIVE_INFINITY : Math.max(emailLimit - emailsSentThisMonth, 0);
@@ -89,6 +98,18 @@ export async function POST(request: Request) {
     .where(audienceWhere(session.salonId, parsed.data.audience))
     .limit(500);
 
+  const sendableRows = rows.filter((customer) => customer.email?.trim());
+
+  if (sendableRows.length > remainingEmails) {
+    return NextResponse.json(
+      {
+        error: `This campaign has ${sendableRows.length} email recipient(s), but your ${PLAN_DEFINITIONS[session.planId].name} plan has ${remainingEmails} email(s) left this month.`,
+        upgradeRequired: session.planId === "free" || session.planId === "basic",
+      },
+      { status: 403 },
+    );
+  }
+
   const result = {
     total: rows.length,
     sent: 0,
@@ -98,11 +119,6 @@ export async function POST(request: Request) {
   };
 
   for (const customer of rows) {
-    if (result.sent >= remainingEmails) {
-      result.skipped += 1;
-      continue;
-    }
-
     const variables = {
       customer_name: customer.name,
       salon_name: session.salonName ?? "our salon",

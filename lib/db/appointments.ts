@@ -3,6 +3,7 @@ import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { appointments, customers, reminders, staff } from "@/db/schema";
 import { fallbackAppointmentSeries, fallbackAppointments, fallbackOwnerStats, fallbackReminders } from "@/lib/fallback-data";
+import { DAY_MS, formatAppointmentTime, getIndiaDateKey, getIndiaDayBounds } from "@/lib/india-time";
 
 async function completePastAppointments(salonId: string) {
   if (!salonId) {
@@ -59,7 +60,76 @@ export async function listAppointmentsForSalon(salonId: string) {
       customerId: row.customerId,
       startAt: row.time.toISOString(),
       endAt: row.endAt?.toISOString() ?? null,
-      time: row.time.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }),
+      time: formatAppointmentTime(row.time),
+      service: row.service,
+      staff: row.staff ?? "Unassigned",
+      staffId: row.staffId,
+      notes: row.notes ?? "",
+      statusRaw: row.status,
+      status: row.status.replace("_", " ").replace(/\b\w/g, (char) => char.toUpperCase()),
+    }));
+  } catch {
+    const today = new Date();
+    return fallbackAppointments.map((appointment, index) => {
+      const startAt = new Date(today);
+      startAt.setHours(10 + index * 2, index % 2 === 0 ? 30 : 0, 0, 0);
+
+      return {
+        ...appointment,
+        id: `fallback-${index}`,
+        customerId: null,
+        staffId: null,
+        startAt: startAt.toISOString(),
+        endAt: null,
+        notes: "",
+        statusRaw: appointment.status.toLowerCase() as "pending",
+      };
+    });
+  }
+}
+
+export async function listTodaysAppointmentsForSalon(salonId: string) {
+  try {
+    await completePastAppointments(salonId);
+    const today = getIndiaDayBounds();
+
+    const rows = await db
+      .select({
+        id: appointments.id,
+        customer: customers.name,
+        customerId: appointments.customerId,
+        time: appointments.startAt,
+        endAt: appointments.endAt,
+        service: appointments.serviceName,
+        staff: staff.name,
+        staffId: appointments.staffId,
+        status: appointments.status,
+        notes: appointments.notes,
+      })
+      .from(appointments)
+      .leftJoin(customers, eq(customers.id, appointments.customerId))
+      .leftJoin(staff, eq(staff.id, appointments.staffId))
+      .where(
+        and(
+          eq(appointments.salonId, salonId),
+          gte(appointments.startAt, today.start),
+          lt(appointments.startAt, today.end),
+          sql`${appointments.status} in ('pending', 'confirmed', 'checked_in')`,
+          sql`not (${appointments.status} = 'completed' and coalesce(${appointments.endAt}, ${appointments.startAt}) < now() - interval '24 hours')`,
+        ),
+      )
+      .orderBy(appointments.startAt)
+      .limit(20);
+
+    const todayKey = getIndiaDateKey();
+
+    return rows.filter((row) => getIndiaDateKey(row.time) === todayKey).map((row) => ({
+      id: row.id,
+      customer: row.customer ?? "Walk-in",
+      customerId: row.customerId,
+      startAt: row.time.toISOString(),
+      endAt: row.endAt?.toISOString() ?? null,
+      time: formatAppointmentTime(row.time),
       service: row.service,
       staff: row.staff ?? "Unassigned",
       staffId: row.staffId,
@@ -193,11 +263,16 @@ export async function cancelAppointment(appointmentId: string, salonId: string) 
 export async function getDashboardAppointmentStats(salonId: string) {
   try {
     await completePastAppointments(salonId);
+    const today = getIndiaDayBounds();
+    const yesterday = {
+      start: new Date(today.start.getTime() - DAY_MS),
+      end: today.start,
+    };
 
     const [stats] = await db
       .select({
-        todayAppointments: sql<number>`count(*) filter (where date(${appointments.startAt}) = current_date)`,
-        yesterdayAppointments: sql<number>`count(*) filter (where date(${appointments.startAt}) = current_date - interval '1 day')`,
+        todayAppointments: sql<number>`count(*) filter (where ${appointments.startAt} >= ${today.start} and ${appointments.startAt} < ${today.end} and ${appointments.status} in ('pending', 'confirmed', 'checked_in'))`,
+        yesterdayAppointments: sql<number>`count(*) filter (where ${appointments.startAt} >= ${yesterday.start} and ${appointments.startAt} < ${yesterday.end} and ${appointments.status} in ('pending', 'confirmed', 'checked_in'))`,
       })
       .from(appointments)
       .where(eq(appointments.salonId, salonId));

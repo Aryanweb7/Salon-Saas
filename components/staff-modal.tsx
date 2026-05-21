@@ -48,7 +48,7 @@ export function StaffModal({ readOnly }: { readOnly: boolean }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button disabled={readOnly}>
+        <Button className="w-full sm:w-auto" disabled={readOnly}>
           <Plus className="mr-2 h-4 w-4" />
           Add Staff Member
         </Button>
@@ -84,11 +84,11 @@ export function StaffModal({ readOnly }: { readOnly: boolean }) {
             <Input id="commissionRate" name="commissionRate" type="number" min={0} max={100} defaultValue={0} required />
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button className="w-full sm:w-auto" type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button disabled={isPending}>{isPending ? "Adding..." : "Add staff"}</Button>
+            <Button className="w-full sm:w-auto" disabled={isPending}>{isPending ? "Adding..." : "Add staff"}</Button>
           </div>
         </form>
       </DialogContent>

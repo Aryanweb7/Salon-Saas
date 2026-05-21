@@ -15,10 +15,10 @@ export default async function AppointmentsPage() {
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <h1 className="text-4xl font-semibold">Appointments</h1>
+        <div className="min-w-0">
+          <h1 className="text-3xl font-semibold sm:text-4xl">Appointments</h1>
           <p className="mt-2 text-[var(--muted-foreground)]">List and calendar views, walk-ins, reschedules, and staff assignment all live here.</p>
         </div>
         <AppointmentBookingModal customers={options.customers} staff={options.staff} readOnly={false} />
@@ -29,15 +29,15 @@ export default async function AppointmentsPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         {appointments.map((appointment) => (
           <Card key={appointment.id} className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold">{appointment.customer}</h2>
-                <p className="text-sm text-[var(--muted-foreground)]">{appointment.service}</p>
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div className="min-w-0">
+                <h2 className="break-words text-xl font-semibold">{appointment.customer}</h2>
+                <p className="break-words text-sm text-[var(--muted-foreground)]">{appointment.service}</p>
               </div>
-              <Badge tone={appointment.status === "Pending" ? "warning" : "success"}>{appointment.status}</Badge>
+              <Badge className="w-fit" tone={appointment.status === "Pending" ? "warning" : "success"}>{appointment.status}</Badge>
             </div>
-            <p className="text-sm text-[var(--muted-foreground)]">{appointment.time} - Assigned to {appointment.staff}</p>
-            {appointment.notes ? <p className="text-sm text-[var(--muted-foreground)]">{appointment.notes}</p> : null}
+            <p className="break-words text-sm text-[var(--muted-foreground)]">{appointment.time} - Assigned to {appointment.staff}</p>
+            {appointment.notes ? <p className="break-words text-sm text-[var(--muted-foreground)]">{appointment.notes}</p> : null}
             <AppointmentCardActions appointment={appointment} staff={options.staff} readOnly={false} />
           </Card>
         ))}

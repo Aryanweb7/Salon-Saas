@@ -22,7 +22,7 @@ interface Customer {
   preferredStylist: string;
 }
 
-export function CustomersClient({ initialCustomers }: { initialCustomers: Customer[] }) {
+export function CustomersClient({ initialCustomers, readOnly }: { initialCustomers: Customer[]; readOnly: boolean }) {
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>(initialCustomers);
   const [searchQuery, setSearchQuery] = useState("");
@@ -90,14 +90,14 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <h1 className="text-4xl font-semibold">Customer CRM</h1>
+        <div className="min-w-0">
+          <h1 className="text-3xl font-semibold sm:text-4xl">Customer CRM</h1>
           <p className="mt-2 text-[var(--muted-foreground)]">Search, filter, and retain every guest with visit context and automation triggers.</p>
         </div>
         <CustomerModal
-          trigger={<Button>Add Customer</Button>}
+          trigger={<Button className="w-full sm:w-auto" disabled={readOnly}>Add Customer</Button>}
           title="Add New Customer"
           description="Create a new customer profile"
           onSuccess={handleCustomerAdded}
@@ -120,7 +120,7 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
           {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? "s" : ""}
         </CardDescription>
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-[760px]">
             <THead>
               <TR>
                 <TH>Name</TH>
@@ -160,7 +160,7 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
                       <div className="flex items-center justify-end gap-2">
                         <CustomerModal
                           trigger={
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" disabled={readOnly}>
                               Edit
                             </Button>
                           }
@@ -179,7 +179,7 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
                           variant="outline"
                           size="sm"
                           onClick={() => handleDelete(customer.id)}
-                          disabled={isDeleting === customer.id}
+                          disabled={readOnly || isDeleting === customer.id}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

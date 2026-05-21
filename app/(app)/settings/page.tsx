@@ -10,16 +10,16 @@ export default async function SettingsPage() {
   const config = snapshot?.config ?? {};
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-4xl font-semibold">Settings</h1>
+    <div className="min-w-0 space-y-6">
+      <div className="min-w-0">
+        <h1 className="text-3xl font-semibold sm:text-4xl">Settings</h1>
         <p className="mt-2 text-[var(--muted-foreground)]">
           Manage your salon business profile.
         </p>
       </div>
       <Card className="max-w-2xl space-y-3">
         <Badge>Business profile</Badge>
-        <p>
+        <p className="break-words">
           {snapshot?.salonName ?? "Salon name"}, {snapshot?.city || "city not set"}.
           GST and receipt identity are saved for billing defaults.
         </p>

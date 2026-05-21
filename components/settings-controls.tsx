@@ -73,7 +73,7 @@ export function BusinessProfileSettings({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" disabled={readOnly}>Edit profile</Button>
+        <Button className="w-full sm:w-auto" variant="outline" disabled={readOnly}>Edit profile</Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
@@ -108,8 +108,8 @@ export function BusinessProfileSettings({
           <Field label="Receipt identity" id="receiptIdentity">
             <Input id="receiptIdentity" name="receiptIdentity" defaultValue={config.receiptIdentity ?? salonName} />
           </Field>
-          <div className="flex items-center justify-between rounded-2xl border p-4">
-            <div>
+          <div className="flex flex-col justify-between gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center">
+            <div className="min-w-0">
               <p className="font-medium">Branding enabled</p>
               <p className="text-sm text-[var(--muted-foreground)]">Use the saved receipt identity across customer receipts.</p>
             </div>
@@ -153,11 +153,11 @@ function DialogActions({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex justify-end gap-2">
-      <Button type="button" variant="outline" onClick={onCancel}>
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <Button className="w-full sm:w-auto" type="button" variant="outline" onClick={onCancel}>
         Cancel
       </Button>
-      <Button disabled={isPending || disabled}>
+      <Button className="w-full sm:w-auto" disabled={isPending || disabled}>
         {isPending ? pendingLabel : label}
       </Button>
     </div>

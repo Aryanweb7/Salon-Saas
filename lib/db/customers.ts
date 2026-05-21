@@ -72,6 +72,19 @@ export async function getCustomerCountForSalon(salonId: string) {
   }
 }
 
+export async function getCustomersCreatedThisMonthForSalon(salonId: string) {
+  try {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(customers)
+      .where(and(eq(customers.salonId, salonId), sql`${customers.createdAt} >= date_trunc('month', now())`));
+
+    return Number(result?.count ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
 export async function listCustomerPhonesForSalon(salonId: string) {
   try {
     const rows = await db

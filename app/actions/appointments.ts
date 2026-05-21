@@ -7,6 +7,7 @@ import { getSessionContext } from "@/lib/auth";
 import { cancelAppointment, createAppointment, rescheduleAppointment } from "@/lib/db/appointments";
 import { getCustomerById } from "@/lib/db/customers";
 import { sendAppointmentConfirmationEmail } from "@/lib/email";
+import { parseIndiaDateTime } from "@/lib/india-time";
 import { assertCanMutateWorkspace } from "@/lib/permissions";
 
 const appointmentSchema = z.object({
@@ -35,7 +36,7 @@ export async function createAppointmentAction(data: AppointmentFormData) {
   }
 
   const validated = appointmentSchema.parse(data);
-  const startAt = new Date(`${validated.date}T${validated.time}:00`);
+  const startAt = parseIndiaDateTime(validated.date, validated.time);
 
   if (Number.isNaN(startAt.getTime())) {
     return { success: false, error: "Invalid appointment date or time" };
@@ -104,7 +105,7 @@ export async function rescheduleAppointmentAction(data: RescheduleAppointmentFor
   }
 
   const validated = rescheduleSchema.parse(data);
-  const startAt = new Date(`${validated.date}T${validated.time}:00`);
+  const startAt = parseIndiaDateTime(validated.date, validated.time);
 
   if (Number.isNaN(startAt.getTime())) {
     return { success: false, error: "Invalid appointment date or time" };

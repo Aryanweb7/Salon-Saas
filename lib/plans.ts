@@ -25,7 +25,7 @@ export const PLAN_DEFINITIONS: Record<PlanId, PlanDefinition> = {
     id: "basic",
     name: "Basic",
     price: 999,
-    staffLimit: 3,
+    staffLimit: 5,
     customerLimit: 500,
     reminderLimit: 100,
     emailLimit: 10,

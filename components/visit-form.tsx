@@ -146,7 +146,7 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
                     handleSelectChange("customerId", customer.id);
                     setCustomerQuery(customer.name);
                   }}
-                  className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-[var(--muted)]"
+                  className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm hover:bg-[var(--muted)]"
                 >
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{customer.name}</span>
@@ -240,6 +240,7 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
 
       <div className="flex justify-end gap-2">
         <Button
+          className="w-full sm:w-auto"
           type="submit"
           disabled={isLoading}
         >

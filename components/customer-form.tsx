@@ -153,6 +153,7 @@ export function CustomerForm({ customerId, initialData, onSuccess }: CustomerFor
 
       <div className="flex justify-end gap-2">
         <Button
+          className="w-full sm:w-auto"
           type="submit"
           disabled={isLoading}
         >

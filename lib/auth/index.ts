@@ -48,7 +48,7 @@ export async function getSessionContext(): Promise<SessionContext> {
       .leftJoin(salons, eq(salons.id, users.salonId))
       .leftJoin(subscriptions, eq(subscriptions.salonId, users.salonId))
       .where(eq(users.id, authSession.user.id))
-      .orderBy(sql`case when ${subscriptions.status} = 'paused' then 1 else 0 end`, desc(subscriptions.createdAt))
+      .orderBy(sql`case when ${subscriptions.status} = 'active' then 2 when ${subscriptions.status} = 'past_due' then 1 else 0 end`, desc(subscriptions.createdAt))
       .limit(1);
   } catch {
     console.warn("Could not refresh session context from the database. Using the signed-in session fallback.");
@@ -74,7 +74,7 @@ export async function getSessionContext(): Promise<SessionContext> {
   }
 
   const subscriptionStatus = context.subscriptionStatus ?? "active";
-  const planId = context.planId ?? "free";
+  const planId = subscriptionStatus === "active" || subscriptionStatus === "past_due" ? context.planId ?? "free" : "free";
 
   return {
     user: { id: context.id, email: context.email, name: context.name },

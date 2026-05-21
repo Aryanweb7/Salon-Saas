@@ -128,11 +128,11 @@ export function MarketingCampaignBuilder({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <section className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-        <div className="max-w-3xl">
+        <div className="min-w-0 max-w-3xl">
           <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Marketing</p>
-          <h1 className="mt-2 text-4xl font-semibold">Create Campaign</h1>
+          <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">Create Campaign</h1>
           <p className="mt-3 text-[var(--muted-foreground)]">
             Build a polished offer, preview it live, choose the right audience, and send it through email.
           </p>
@@ -146,11 +146,11 @@ export function MarketingCampaignBuilder({
         </div>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
         <div className="space-y-5">
-          <Card className="bg-[linear-gradient(135deg,rgba(181,93,51,0.14),rgba(31,59,53,0.08))]">
+          <Card>
             <div className="flex items-center justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <CardTitle>Templates</CardTitle>
                 <CardDescription>Start from a salon-ready campaign.</CardDescription>
               </div>
@@ -163,9 +163,9 @@ export function MarketingCampaignBuilder({
                   key={template.id}
                   type="button"
                   onClick={() => applyTemplate(template)}
-                  className="rounded-2xl border bg-[var(--background)]/70 p-4 text-left transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:shadow-sm"
+                  className="rounded-2xl border bg-[var(--background)] p-4 text-left"
                 >
-                  <p className="font-semibold">{template.label}</p>
+                  <p className="break-words font-semibold">{template.label}</p>
                   <p className="mt-2 line-clamp-2 text-sm text-[var(--muted-foreground)]">{template.title}</p>
                 </button>
               ))}
@@ -206,23 +206,30 @@ export function MarketingCampaignBuilder({
             <CardDescription>Select who should receive this offer.</CardDescription>
 
             <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {audienceStats.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setAudience(item.id)}
-                  className={cn(
-                    "rounded-2xl border p-4 text-left transition hover:border-[var(--primary)]",
-                    audience === item.id ? "border-[var(--primary)] bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]" : "bg-transparent",
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold">{item.label}</p>
-                    <Badge>{item.count}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-[var(--muted-foreground)]">{item.description}</p>
-                </button>
-              ))}
+              {audienceStats.map((item) => {
+                const locked = item.id === "birthday" && planId !== "pro";
+
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      if (!locked) setAudience(item.id);
+                    }}
+                    disabled={locked}
+                    className={cn(
+                      "rounded-2xl border p-4 text-left disabled:cursor-not-allowed disabled:opacity-60",
+                      audience === item.id ? "border-[var(--primary)] bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]" : "bg-transparent",
+                    )}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="break-words font-semibold">{item.label}</p>
+                      <Badge>{item.count}</Badge>
+                    </div>
+                    <p className="mt-2 text-sm text-[var(--muted-foreground)]">{locked ? "Birthday-only campaigns are available on Pro." : item.description}</p>
+                  </button>
+                );
+              })}
             </div>
           </Card>
         </div>
@@ -230,7 +237,7 @@ export function MarketingCampaignBuilder({
         <div className="space-y-5 xl:sticky xl:top-8 xl:self-start">
           <Card className={limitReached ? "border-[var(--danger)]/40 bg-[color-mix(in_srgb,var(--danger)_10%,transparent)]" : ""}>
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <CardTitle>Email Usage</CardTitle>
                 <CardDescription>
                   {emailsSentThisMonth} of {emailLimit ?? "unlimited"} campaign emails used this month on {planName}.
@@ -270,9 +277,9 @@ export function MarketingCampaignBuilder({
           </Card>
 
           <Card className="overflow-hidden p-0">
-            <div className="border-b bg-[linear-gradient(135deg,rgba(31,59,53,0.12),rgba(181,93,51,0.10))] p-5">
+            <div className="border-b bg-[var(--muted)] p-5">
               <div className="flex items-center justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <CardTitle>Live Preview</CardTitle>
                   <CardDescription>Inbox preview</CardDescription>
                 </div>
@@ -281,7 +288,7 @@ export function MarketingCampaignBuilder({
             </div>
 
             <div className="p-5">
-              <div className="rounded-2xl border bg-[var(--background)] p-5 shadow-sm">
+              <div className="rounded-2xl border bg-[var(--background)] p-5">
                 <div className="mb-4 flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)] text-sm font-bold text-[var(--primary-foreground)]">
                     {salonName.slice(0, 1).toUpperCase()}
@@ -294,19 +301,19 @@ export function MarketingCampaignBuilder({
                   </div>
                 </div>
 
-                <h2 className="text-2xl font-semibold">{previewTitle || "Campaign title"}</h2>
+                <h2 className="break-words text-xl font-semibold sm:text-2xl">{previewTitle || "Campaign title"}</h2>
                 <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-[var(--muted-foreground)]">
                   {previewMessage || "Your message preview will appear here."}
                 </p>
 
                 <div className="mt-5 flex items-center gap-2 rounded-2xl bg-[var(--muted)] p-3 text-sm">
                   <Gift className="h-4 w-4" />
-                  <span>Audience: {selectedAudience?.label ?? "All Customers"}</span>
+                  <span className="min-w-0 break-words">Audience: {selectedAudience?.label ?? "All Customers"}</span>
                 </div>
               </div>
 
               {result ? (
-                <div className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
+                <div className="mt-4 grid gap-3 text-center text-sm sm:grid-cols-3">
                   <div className="rounded-2xl border p-3">
                     <p className="text-[var(--muted-foreground)]">Sent</p>
                     <p className="text-xl font-semibold">{result.sent}</p>

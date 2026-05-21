@@ -8,10 +8,6 @@ export interface UsageSnapshot {
 }
 
 export function getReadOnlyReason(status: SubscriptionStatus) {
-  if (status === "overdue") return "Your paid plan is overdue and has moved to the Free plan.";
-  if (status === "expired") return "Your paid subscription has expired. The workspace remains on the Free plan.";
-  if (status === "canceled") return "This paid subscription is canceled. The workspace remains on the Free plan.";
-  if (status === "paused") return "A paid checkout was started but has not been activated yet.";
   return null;
 }
 

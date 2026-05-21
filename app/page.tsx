@@ -53,46 +53,46 @@ export default function HomePage() {
       <section className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-6">
           <Badge tone="warning">Built for salons, barbershops, beauty parlors, and grooming studios</Badge>
-          <h1 className="max-w-4xl text-5xl font-bold tracking-tight md:text-7xl">
+          <h1 className="max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl md:text-7xl">
             SalonFlow helps salon owners manage bookings, customers, visits, and email campaigns.
           </h1>
-          <p className="max-w-2xl text-lg text-[var(--muted-foreground)]">
+          <p className="max-w-2xl text-base text-[var(--muted-foreground)] sm:text-lg">
             Run daily salon operations from one focused workspace: searchable customer records, appointment
             confirmations, visit billing, staff management, reports, and plan-based email marketing.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/register">
-              <Button size="lg">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link className="w-full sm:w-auto" href="/register">
+              <Button className="w-full sm:w-auto" size="lg">
                 Signup <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/login">
-              <Button variant="outline" size="lg">
+            <Link className="w-full sm:w-auto" href="/login">
+              <Button className="w-full sm:w-auto" variant="outline" size="lg">
                 Login
               </Button>
             </Link>
           </div>
         </div>
 
-        <Card className="overflow-hidden bg-[linear-gradient(180deg,rgba(255,248,240,0.96),rgba(242,230,214,0.92))] text-[var(--foreground)]">
+        <Card className="overflow-hidden text-[var(--foreground)]">
           <div className="space-y-4">
             <Badge className="bg-[var(--foreground)]/8 text-[var(--foreground)]">Salon owner toolkit</Badge>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {[
                 ["Plans", "Free, Basic, Pro"],
                 ["Customers", "Search + history"],
                 ["Emails", "5 / 10 / 20 monthly"],
                 ["Billing", "Razorpay"],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-3xl border border-[var(--border)] bg-white/40 p-4">
+                <div key={label} className="rounded-2xl border border-[var(--border)] bg-white/40 p-4 sm:rounded-3xl">
                   <p className="text-sm text-[var(--muted-foreground)]">{label}</p>
-                  <p className="mt-2 text-3xl font-semibold">{value}</p>
+                  <p className="mt-2 break-words text-2xl font-semibold sm:text-3xl">{value}</p>
                 </div>
               ))}
             </div>
-            <div className="rounded-3xl border border-[var(--border)] bg-white/40 p-5">
+            <div className="rounded-2xl border border-[var(--border)] bg-white/40 p-5 sm:rounded-3xl">
               <p className="text-sm text-[var(--muted-foreground)]">Daily operations</p>
-              <p className="mt-2 text-2xl font-semibold">
+              <p className="mt-2 text-xl font-semibold sm:text-2xl">
                 Appointments, visit records, staff, reports, email campaigns, and subscription billing.
               </p>
             </div>
