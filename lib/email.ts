@@ -20,15 +20,28 @@ interface SendMarketingEmailParams {
   message: string;
 }
 
-const DEFAULT_EMAIL_FROM = "SalonFlow <noreply@salonflow.co.in>";
+function getEmailFrom() {
+  const configuredFrom = process.env.EMAIL_FROM?.trim();
+
+  if (!configuredFrom) {
+    throw new Error("Email service is not configured. Set EMAIL_FROM.");
+  }
+
+  if (configuredFrom.includes("resend.dev")) {
+    throw new Error("EMAIL_FROM must use your verified domain, not resend.dev.");
+  }
+
+  return configuredFrom;
+}
 
 export async function sendPasswordResetEmail({ to, resetUrl }: SendPasswordResetEmailParams) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || DEFAULT_EMAIL_FROM;
 
   if (!apiKey) {
     throw new Error("Email service is not configured. Set RESEND_API_KEY.");
   }
+
+  const from = getEmailFrom();
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -124,11 +137,12 @@ async function sendEmail(params: {
   text?: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || DEFAULT_EMAIL_FROM;
 
   if (!apiKey) {
     throw new Error("Email service is not configured. Set RESEND_API_KEY.");
   }
+
+  const from = getEmailFrom();
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
