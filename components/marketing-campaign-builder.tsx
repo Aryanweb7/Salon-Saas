@@ -94,8 +94,10 @@ export function MarketingCampaignBuilder({
   const [isPending, startTransition] = useTransition();
 
   const selectedAudience = audienceStats.find((item) => item.id === audience);
+  const selectedAudienceCount = selectedAudience?.count ?? 0;
   const remainingEmails = emailLimit === null ? null : Math.max(emailLimit - emailsSentThisMonth, 0);
   const limitReached = remainingEmails !== null && remainingEmails <= 0;
+  const tooManyRecipients = remainingEmails !== null && selectedAudienceCount > remainingEmails;
   const shouldShowUpgradePrompt = planId === "free" || planId === "basic";
   const previewTitle = useMemo(() => renderPreview(title, salonName), [title, salonName]);
   const previewMessage = useMemo(() => renderPreview(message, salonName), [message, salonName]);
@@ -108,6 +110,11 @@ export function MarketingCampaignBuilder({
 
   function sendCampaign() {
     setResult(null);
+
+    if (tooManyRecipients) {
+      toast.error(`This audience has ${selectedAudienceCount} recipient(s), but only ${remainingEmails} campaign email(s) are left this month.`);
+      return;
+    }
 
     startTransition(async () => {
       const response = await fetch("/api/marketing/campaigns", {
@@ -138,7 +145,7 @@ export function MarketingCampaignBuilder({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Badge tone="success">{selectedAudience?.count ?? 0} selected</Badge>
+          <Badge tone="success">{selectedAudienceCount} selected</Badge>
           <Badge>Email</Badge>
           <Badge tone={limitReached ? "danger" : "warning"}>
             {emailLimit === null ? "Unlimited emails" : `${remainingEmails} emails left`}
@@ -264,6 +271,11 @@ export function MarketingCampaignBuilder({
                 </Button>
               </div>
             ) : null}
+            {tooManyRecipients ? (
+              <p className="mt-3 text-sm text-[var(--danger)]">
+                Selected audience is larger than your remaining campaign email limit.
+              </p>
+            ) : null}
           </Card>
 
           <Card>
@@ -337,7 +349,7 @@ export function MarketingCampaignBuilder({
                 <Button
                   type="button"
                   className="flex-1"
-                  disabled={isPending || limitReached || !title.trim() || !message.trim()}
+                  disabled={isPending || limitReached || tooManyRecipients || !title.trim() || !message.trim()}
                   onClick={sendCampaign}
                 >
                   <Send className="mr-2 h-4 w-4" />
