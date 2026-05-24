@@ -4,6 +4,7 @@ import { getCampaignEmailsSentThisMonthForSalon, logCampaignEmail } from "@/lib/
 import { PLAN_DEFINITIONS } from "@/lib/plans";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const DEFAULT_EMAIL_FROM = "SalonFlow <noreply@salonflow.co.in>";
 
 export async function POST(req) {
   try {
@@ -13,9 +14,9 @@ export async function POST(req) {
       return Response.json({ error: "No salon is attached to this account." }, { status: 403 });
     }
 
-    if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
+    if (!process.env.RESEND_API_KEY) {
       return Response.json(
-        { error: "Email service is not configured. Set RESEND_API_KEY and EMAIL_FROM." },
+        { error: "Email service is not configured. Set RESEND_API_KEY." },
         { status: 500 },
       );
     }
@@ -37,7 +38,7 @@ export async function POST(req) {
     }
 
     const data = await resend.emails.send({
-      from: process.env.EMAIL_FROM,
+      from: process.env.EMAIL_FROM || DEFAULT_EMAIL_FROM,
       to: body.email,
       subject: "Salon Appointment Confirmed",
       html: `
