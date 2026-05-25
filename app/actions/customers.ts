@@ -17,7 +17,7 @@ const customerSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   birthday: z.string().optional().or(z.literal("")),
   gender: z.string().optional().or(z.literal("")),
-  preferredStaffId: z.string().optional().or(z.literal("")),
+  preferredStaffId: z.string().uuid("Select a valid preferred stylist").optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
 });
 

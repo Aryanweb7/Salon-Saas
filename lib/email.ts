@@ -20,6 +20,11 @@ interface SendMarketingEmailParams {
   message: string;
 }
 
+const RESEND_EMAILS_URL = "https://api.resend.com/emails";
+const RESEND_BATCH_URL = "https://api.resend.com/emails/batch";
+const MAX_BATCH_SIZE = 100;
+const MAX_RESEND_ATTEMPTS = 4;
+
 function getEmailFrom() {
   const configuredFrom = process.env.EMAIL_FROM?.trim();
 
@@ -34,16 +39,79 @@ function getEmailFrom() {
   return configuredFrom;
 }
 
-export async function sendPasswordResetEmail({ to, resetUrl }: SendPasswordResetEmailParams) {
+function getResendApiKey() {
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
     throw new Error("Email service is not configured. Set RESEND_API_KEY.");
   }
 
+  return apiKey;
+}
+
+function buildMarketingEmail({
+  customerName,
+  salonName,
+  title,
+  message,
+}: Omit<SendMarketingEmailParams, "to">) {
+  return {
+    subject: title,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111">
+        <div style="border:1px solid #eee;border-radius:16px;padding:24px;max-width:560px">
+          <p style="margin:0 0 8px;color:#666;font-size:13px">${escapeHtml(salonName)}</p>
+          <h2 style="margin:0 0 16px">${escapeHtml(title)}</h2>
+          <p>Hello ${escapeHtml(customerName)},</p>
+          <div>${escapeHtml(message).replace(/\n/g, "<br />")}</div>
+        </div>
+      </div>
+    `,
+    text: `Hello ${customerName},\n\n${message}\n\n${salonName}`,
+  };
+}
+
+function parseRetryAfter(value: string | null) {
+  if (!value) return null;
+
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(seconds * 1000, 0);
+
+  const dateTime = Date.parse(value);
+  if (Number.isFinite(dateTime)) return Math.max(dateTime - Date.now(), 0);
+
+  return null;
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function resendFetch(url: string, init: RequestInit) {
+  for (let attempt = 0; attempt < MAX_RESEND_ATTEMPTS; attempt += 1) {
+    const response = await fetch(url, init);
+
+    if (response.status !== 429 && response.status < 500) {
+      return response;
+    }
+
+    if (attempt === MAX_RESEND_ATTEMPTS - 1) {
+      return response;
+    }
+
+    const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
+    const backoff = retryAfter ?? 500 * 2 ** attempt;
+    await wait(backoff);
+  }
+
+  throw new Error("Failed to send email");
+}
+
+export async function sendPasswordResetEmail({ to, resetUrl }: SendPasswordResetEmailParams) {
+  const apiKey = getResendApiKey();
   const from = getEmailFrom();
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await resendFetch(RESEND_EMAILS_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -113,21 +181,54 @@ export async function sendMarketingEmail({
   title,
   message,
 }: SendMarketingEmailParams) {
+  const email = buildMarketingEmail({ customerName, salonName, title, message });
+
   await sendEmail({
     to,
-    subject: title,
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111">
-        <div style="border:1px solid #eee;border-radius:16px;padding:24px;max-width:560px">
-          <p style="margin:0 0 8px;color:#666;font-size:13px">${escapeHtml(salonName)}</p>
-          <h2 style="margin:0 0 16px">${escapeHtml(title)}</h2>
-          <p>Hello ${escapeHtml(customerName)},</p>
-          <div>${escapeHtml(message).replace(/\n/g, "<br />")}</div>
-        </div>
-      </div>
-    `,
-    text: `Hello ${customerName},\n\n${message}\n\n${salonName}`,
+    subject: email.subject,
+    html: email.html,
+    text: email.text,
   });
+}
+
+export async function sendMarketingEmailBatch(messages: SendMarketingEmailParams[]) {
+  if (messages.length === 0) return;
+
+  const apiKey = getResendApiKey();
+  const from = getEmailFrom();
+
+  for (let index = 0; index < messages.length; index += MAX_BATCH_SIZE) {
+    const chunk = messages.slice(index, index + MAX_BATCH_SIZE);
+    const payload = chunk.map((message) => {
+      const email = buildMarketingEmail(message);
+
+      return {
+        from,
+        to: [message.to],
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
+      };
+    });
+
+    const response = await resendFetch(RESEND_BATCH_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response?.ok) {
+      const error = (await response?.json().catch(() => null)) as { message?: string } | null;
+      throw new Error(error?.message ?? "Failed to send email batch");
+    }
+
+    if (index + MAX_BATCH_SIZE < messages.length) {
+      await wait(600);
+    }
+  }
 }
 
 async function sendEmail(params: {
@@ -136,15 +237,10 @@ async function sendEmail(params: {
   html: string;
   text?: string;
 }) {
-  const apiKey = process.env.RESEND_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("Email service is not configured. Set RESEND_API_KEY.");
-  }
-
+  const apiKey = getResendApiKey();
   const from = getEmailFrom();
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await resendFetch(RESEND_EMAILS_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,

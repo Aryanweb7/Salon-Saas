@@ -43,10 +43,13 @@ export const fallbackCustomers = Array.from({ length: 10 }, (_, index) => ({
   id: `cust_${index + 1}`,
   name: ["Rahul Verma", "Priya Shah", "Aditi Jain", "Kabir Singh", "Meera Nair", "Sneha Arora", "Rohan Das", "Pooja Iyer", "Karan Khurana", "Sara Ali"][index],
   phone: `+91 98765 43${(10 + index).toString().padStart(2, "0")}`,
+  email: "",
   birthday: `199${index}-0${(index % 9) + 1}-15`,
   gender: index % 2 === 0 ? "Male" : "Female",
   lastVisit: `2026-04-${(10 + index).toString().padStart(2, "0")}`,
+  preferredStaffId: "",
   preferredStylist: ["Riya", "Aman", "Zara"][index % 3],
+  notes: "",
 }));
 
 export const fallbackAppointments = [

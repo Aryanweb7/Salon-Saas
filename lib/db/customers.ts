@@ -11,10 +11,13 @@ export async function listCustomersForSalon(salonId: string, search?: string) {
         id: customers.id,
         name: customers.name,
         phone: customers.phone,
+        email: customers.email,
         birthday: customers.birthday,
         gender: customers.gender,
         lastVisit: customers.lastVisitAt,
+        preferredStaffId: customers.preferredStaffId,
         preferredStylist: staff.name,
+        notes: customers.notes,
       })
       .from(customers)
       .leftJoin(staff, eq(staff.id, customers.preferredStaffId))
@@ -26,13 +29,31 @@ export async function listCustomersForSalon(salonId: string, search?: string) {
       id: row.id,
       name: row.name,
       phone: row.phone,
-      birthday: row.birthday?.toISOString().slice(0, 10) ?? "N/A",
-      gender: row.gender ?? "N/A",
+      email: row.email ?? "",
+      birthday: row.birthday?.toISOString().slice(0, 10) ?? "",
+      gender: row.gender ?? "",
       lastVisit: row.lastVisit?.toISOString().slice(0, 10) ?? "N/A",
+      preferredStaffId: row.preferredStaffId ?? "",
       preferredStylist: row.preferredStylist ?? "Unassigned",
+      notes: row.notes ?? "",
     }));
   } catch {
     return fallbackCustomers;
+  }
+}
+
+export async function listStaffOptionsForSalon(salonId: string) {
+  try {
+    return db
+      .select({
+        id: staff.id,
+        name: staff.name,
+      })
+      .from(staff)
+      .where(eq(staff.salonId, salonId))
+      .orderBy(staff.name);
+  } catch {
+    return [];
   }
 }
 

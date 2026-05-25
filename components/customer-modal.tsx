@@ -16,6 +16,7 @@ interface CustomerModalProps {
   trigger: React.ReactNode;
   customerId?: string;
   initialData?: Partial<CustomerFormData>;
+  staffOptions?: Array<{ id: string; name: string }>;
   title?: string;
   description?: string;
   onSuccess?: () => void | Promise<void>;
@@ -25,6 +26,7 @@ export function CustomerModal({
   trigger,
   customerId,
   initialData,
+  staffOptions,
   title = "Add Customer",
   description = "Add a new customer to your CRM",
   onSuccess,
@@ -42,6 +44,7 @@ export function CustomerModal({
         <CustomerForm
           customerId={customerId}
           initialData={initialData}
+          staffOptions={staffOptions}
           onSuccess={async () => {
             setOpen(false);
             await onSuccess?.();

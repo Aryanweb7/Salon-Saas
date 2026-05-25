@@ -16,13 +16,24 @@ interface Customer {
   id: string;
   name: string;
   phone: string;
+  email: string;
   birthday: string;
   gender: string;
   lastVisit: string;
+  preferredStaffId: string;
   preferredStylist: string;
+  notes: string;
 }
 
-export function CustomersClient({ initialCustomers, readOnly }: { initialCustomers: Customer[]; readOnly: boolean }) {
+export function CustomersClient({
+  initialCustomers,
+  staffOptions,
+  readOnly,
+}: {
+  initialCustomers: Customer[];
+  staffOptions: Array<{ id: string; name: string }>;
+  readOnly: boolean;
+}) {
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>(initialCustomers);
   const [searchQuery, setSearchQuery] = useState("");
@@ -100,6 +111,7 @@ export function CustomersClient({ initialCustomers, readOnly }: { initialCustome
           trigger={<Button className="w-full sm:w-auto" disabled={readOnly}>Add Customer</Button>}
           title="Add New Customer"
           description="Create a new customer profile"
+          staffOptions={staffOptions}
           onSuccess={handleCustomerAdded}
         />
       </div>
@@ -168,9 +180,13 @@ export function CustomersClient({ initialCustomers, readOnly }: { initialCustome
                           initialData={{
                             name: customer.name,
                             phone: customer.phone,
+                            email: customer.email,
                             birthday: customer.birthday,
                             gender: customer.gender,
+                            preferredStaffId: customer.preferredStaffId,
+                            notes: customer.notes,
                           }}
+                          staffOptions={staffOptions}
                           title="Edit Customer"
                           description="Update customer information"
                           onSuccess={handleCustomerUpdated}

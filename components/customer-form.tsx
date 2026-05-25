@@ -12,10 +12,13 @@ import { toast } from "sonner";
 interface CustomerFormProps {
   customerId?: string;
   initialData?: Partial<CustomerFormData>;
+  staffOptions?: Array<{ id: string; name: string }>;
   onSuccess?: () => void;
 }
 
-export function CustomerForm({ customerId, initialData, onSuccess }: CustomerFormProps) {
+const NO_PREFERRED_STAFF = "none";
+
+export function CustomerForm({ customerId, initialData, staffOptions = [], onSuccess }: CustomerFormProps) {
   const [formData, setFormData] = useState<CustomerFormData>({
     name: initialData?.name ?? "",
     phone: initialData?.phone ?? "",
@@ -36,7 +39,7 @@ export function CustomerForm({ customerId, initialData, onSuccess }: CustomerFor
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value === NO_PREFERRED_STAFF ? "" : value }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -130,13 +133,22 @@ export function CustomerForm({ customerId, initialData, onSuccess }: CustomerFor
 
         <div className="space-y-2">
           <Label htmlFor="preferredStaffId">Preferred Stylist</Label>
-          <Input
-            id="preferredStaffId"
-            name="preferredStaffId"
-            value={formData.preferredStaffId}
-            onChange={handleChange}
-            placeholder="Staff ID (optional)"
-          />
+          <Select
+            value={formData.preferredStaffId || NO_PREFERRED_STAFF}
+            onValueChange={(value) => handleSelectChange("preferredStaffId", value)}
+          >
+            <SelectTrigger id="preferredStaffId">
+              <SelectValue placeholder="Select preferred stylist" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_PREFERRED_STAFF}>No preferred stylist</SelectItem>
+              {staffOptions.map((member) => (
+                <SelectItem key={member.id} value={member.id}>
+                  {member.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

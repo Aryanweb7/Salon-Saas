@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { customers } from "@/db/schema";
 import { getSessionContext } from "@/lib/auth";
 import { getCampaignEmailsSentThisMonthForSalon, logCampaignEmail } from "@/lib/db/email-campaigns";
-import { sendMarketingEmail } from "@/lib/email";
+import { sendMarketingEmailBatch } from "@/lib/email";
 import { requireFeature } from "@/lib/gating";
 import { PLAN_DEFINITIONS } from "@/lib/plans";
 
@@ -58,6 +58,7 @@ export async function POST(request: Request) {
   if (!session.salonId) {
     return NextResponse.json({ error: "No salon is attached to this account." }, { status: 403 });
   }
+  const salonId = session.salonId;
 
   const body = await request.json().catch(() => null);
   const parsed = campaignSchema.safeParse(body);
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
   }
 
   const emailLimit = PLAN_DEFINITIONS[session.planId].emailLimit;
-  const emailsSentThisMonth = await getCampaignEmailsSentThisMonthForSalon(session.salonId);
+  const emailsSentThisMonth = await getCampaignEmailsSentThisMonthForSalon(salonId);
   const remainingEmails = emailLimit === null ? Number.POSITIVE_INFINITY : Math.max(emailLimit - emailsSentThisMonth, 0);
 
   if (remainingEmails <= 0) {
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
       email: customers.email,
     })
     .from(customers)
-    .where(audienceWhere(session.salonId, parsed.data.audience))
+    .where(audienceWhere(salonId, parsed.data.audience))
     .limit(500);
 
   const sendableRows = rows.filter((customer) => customer.email?.trim());
@@ -118,7 +119,15 @@ export async function POST(request: Request) {
     failedRecipients: [] as Array<{ name: string; reason: string }>,
   };
 
+  const messages = [];
+  const sendableCustomers = [];
+
   for (const customer of rows) {
+    if (!customer.email?.trim()) {
+      result.skipped += 1;
+      continue;
+    }
+
     const variables = {
       customer_name: customer.name,
       salon_name: session.salonName ?? "our salon",
@@ -126,49 +135,55 @@ export async function POST(request: Request) {
     const title = renderTemplate(parsed.data.title, variables);
     const message = renderTemplate(parsed.data.message, variables);
 
-    try {
-      if (!customer.email?.trim()) {
-        result.skipped += 1;
-        continue;
-      }
+    sendableCustomers.push({ ...customer, title });
+    messages.push({
+      to: customer.email,
+      customerName: customer.name,
+      salonName: session.salonName ?? "our salon",
+      title,
+      message,
+    });
+  }
 
-      await sendMarketingEmail({
-        to: customer.email,
-        customerName: customer.name,
-        salonName: session.salonName ?? "our salon",
-        title,
-        message,
-      });
+  try {
+    await sendMarketingEmailBatch(messages);
 
-      await logCampaignEmail({
-        salonId: session.salonId,
-        customerId: customer.id,
-        email: customer.email,
-        title,
-        audience: parsed.data.audience,
-        status: "sent",
-      });
-
-      result.sent += 1;
-    } catch (error) {
-      if (customer.email?.trim()) {
-        await logCampaignEmail({
-          salonId: session.salonId,
+    await Promise.all(
+      sendableCustomers.map((customer) =>
+        logCampaignEmail({
+          salonId,
           customerId: customer.id,
-          email: customer.email,
-          title,
+          email: customer.email ?? "",
+          title: customer.title,
+          audience: parsed.data.audience,
+          status: "sent",
+        }),
+      ),
+    );
+
+    result.sent = sendableCustomers.length;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Failed to send campaign";
+
+    await Promise.all(
+      sendableCustomers.map((customer) =>
+        logCampaignEmail({
+          salonId,
+          customerId: customer.id,
+          email: customer.email ?? "",
+          title: customer.title,
           audience: parsed.data.audience,
           status: "failed",
-          error: error instanceof Error ? error.message : "Failed to send campaign",
-        }).catch(() => null);
-      }
+          error: reason,
+        }).catch(() => null),
+      ),
+    );
 
-      result.failed += 1;
-      result.failedRecipients.push({
-        name: customer.name,
-        reason: error instanceof Error ? error.message : "Failed to send campaign",
-      });
-    }
+    result.failed = sendableCustomers.length;
+    result.failedRecipients = sendableCustomers.map((customer) => ({
+      name: customer.name,
+      reason,
+    }));
   }
 
   return NextResponse.json(result);
