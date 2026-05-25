@@ -303,6 +303,7 @@ export const emailCampaignLogs = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     salonId: uuid("salon_id").notNull().references(() => salons.id, { onDelete: "cascade" }),
     customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+    campaignId: uuid("campaign_id"),
     email: varchar("email", { length: 255 }).notNull(),
     title: varchar("title", { length: 160 }).notNull(),
     audience: varchar("audience", { length: 60 }).notNull(),
@@ -313,6 +314,7 @@ export const emailCampaignLogs = pgTable(
   (table) => ({
     salonIdx: index("email_campaign_logs_salon_idx").on(table.salonId),
     customerIdx: index("email_campaign_logs_customer_idx").on(table.customerId),
+    campaignIdx: index("email_campaign_logs_campaign_idx").on(table.campaignId),
     statusIdx: index("email_campaign_logs_status_idx").on(table.status),
   }),
 );

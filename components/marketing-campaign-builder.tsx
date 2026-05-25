@@ -78,14 +78,14 @@ export function MarketingCampaignBuilder({
   planName,
   planId,
   emailLimit,
-  emailsSentThisMonth,
+  campaignSendsThisMonth,
 }: {
   salonName: string;
   audienceStats: AudienceStat[];
   planName: string;
   planId: PlanId;
   emailLimit: number | null;
-  emailsSentThisMonth: number;
+  campaignSendsThisMonth: number;
 }) {
   const [title, setTitle] = useState(templates[1].title);
   const [message, setMessage] = useState(templates[1].message);
@@ -95,9 +95,8 @@ export function MarketingCampaignBuilder({
 
   const selectedAudience = audienceStats.find((item) => item.id === audience);
   const selectedAudienceCount = selectedAudience?.count ?? 0;
-  const remainingEmails = emailLimit === null ? null : Math.max(emailLimit - emailsSentThisMonth, 0);
-  const limitReached = remainingEmails !== null && remainingEmails <= 0;
-  const tooManyRecipients = remainingEmails !== null && selectedAudienceCount > remainingEmails;
+  const remainingCampaignSends = emailLimit === null ? null : Math.max(emailLimit - campaignSendsThisMonth, 0);
+  const limitReached = remainingCampaignSends !== null && remainingCampaignSends <= 0;
   const shouldShowUpgradePrompt = planId === "free" || planId === "basic";
   const previewTitle = useMemo(() => renderPreview(title, salonName), [title, salonName]);
   const previewMessage = useMemo(() => renderPreview(message, salonName), [message, salonName]);
@@ -110,11 +109,6 @@ export function MarketingCampaignBuilder({
 
   function sendCampaign() {
     setResult(null);
-
-    if (tooManyRecipients) {
-      toast.error(`This audience has ${selectedAudienceCount} recipient(s), but only ${remainingEmails} campaign email(s) are left this month.`);
-      return;
-    }
 
     startTransition(async () => {
       const response = await fetch("/api/marketing/campaigns", {
@@ -148,7 +142,7 @@ export function MarketingCampaignBuilder({
           <Badge tone="success">{selectedAudienceCount} selected</Badge>
           <Badge>Email</Badge>
           <Badge tone={limitReached ? "danger" : "warning"}>
-            {emailLimit === null ? "Unlimited emails" : `${remainingEmails} emails left`}
+            {emailLimit === null ? "Unlimited campaign sends" : `${remainingCampaignSends} campaign sends left`}
           </Badge>
         </div>
       </section>
@@ -247,7 +241,7 @@ export function MarketingCampaignBuilder({
               <div className="min-w-0">
                 <CardTitle>Email Usage</CardTitle>
                 <CardDescription>
-                  {emailsSentThisMonth} of {emailLimit ?? "unlimited"} campaign emails used this month on {planName}.
+                  {campaignSendsThisMonth} of {emailLimit ?? "unlimited"} campaign sends used this month on {planName}.
                 </CardDescription>
               </div>
               <TrendingUp className="h-5 w-5 text-[var(--primary)]" />
@@ -256,25 +250,20 @@ export function MarketingCampaignBuilder({
               <div
                 className="h-full rounded-full bg-[var(--primary)]"
                 style={{
-                  width: emailLimit ? `${Math.min((emailsSentThisMonth / emailLimit) * 100, 100)}%` : "100%",
+                  width: emailLimit ? `${Math.min((campaignSendsThisMonth / emailLimit) * 100, 100)}%` : "100%",
                 }}
               />
             </div>
             {shouldShowUpgradePrompt ? (
               <div className="mt-4 rounded-2xl border bg-[var(--background)]/70 p-4 text-sm">
-                <p className="font-semibold">Need more campaign emails?</p>
+                <p className="font-semibold">Need more campaign sends?</p>
                 <p className="mt-1 text-[var(--muted-foreground)]">
-                  Upgrade your plan to increase your monthly email campaign limit.
+                  Upgrade your plan to increase your monthly campaign send limit.
                 </p>
                 <Button asChild className="mt-3 w-full" variant={limitReached ? "default" : "outline"}>
                   <a href="/billing">Upgrade plan</a>
                 </Button>
               </div>
-            ) : null}
-            {tooManyRecipients ? (
-              <p className="mt-3 text-sm text-[var(--danger)]">
-                Selected audience is larger than your remaining campaign email limit.
-              </p>
             ) : null}
           </Card>
 
@@ -349,7 +338,7 @@ export function MarketingCampaignBuilder({
                 <Button
                   type="button"
                   className="flex-1"
-                  disabled={isPending || limitReached || tooManyRecipients || !title.trim() || !message.trim()}
+                  disabled={isPending || limitReached || !title.trim() || !message.trim()}
                   onClick={sendCampaign}
                 >
                   <Send className="mr-2 h-4 w-4" />

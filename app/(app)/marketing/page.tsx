@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { customers } from "@/db/schema";
 import { MarketingCampaignBuilder } from "@/components/marketing-campaign-builder";
 import { getSessionContext } from "@/lib/auth";
-import { getCampaignEmailsSentThisMonthForSalon } from "@/lib/db/email-campaigns";
+import { getCampaignSendsThisMonthForSalon } from "@/lib/db/email-campaigns";
 import { PLAN_DEFINITIONS } from "@/lib/plans";
 
 async function getAudienceStats(salonId: string) {
@@ -73,10 +73,10 @@ async function getAudienceStats(salonId: string) {
 
 export default async function MarketingPage() {
   const session = await getSessionContext();
-  const [audienceStats, emailsSentThisMonth] = session.salonId
+  const [audienceStats, campaignSendsThisMonth] = session.salonId
     ? await Promise.all([
         getAudienceStats(session.salonId),
-        getCampaignEmailsSentThisMonthForSalon(session.salonId),
+        getCampaignSendsThisMonthForSalon(session.salonId),
       ])
     : [await getAudienceStats(""), 0];
   const currentPlan = PLAN_DEFINITIONS[session.planId];
@@ -88,7 +88,7 @@ export default async function MarketingPage() {
       planName={currentPlan.name}
       planId={session.planId}
       emailLimit={currentPlan.emailLimit}
-      emailsSentThisMonth={emailsSentThisMonth}
+      campaignSendsThisMonth={campaignSendsThisMonth}
     />
   );
 }

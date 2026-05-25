@@ -1,7 +1,6 @@
 import { Resend } from "resend";
 import { getSessionContext } from "@/lib/auth";
-import { getCampaignEmailsSentThisMonthForSalon, logCampaignEmail } from "@/lib/db/email-campaigns";
-import { PLAN_DEFINITIONS } from "@/lib/plans";
+import { logCampaignEmail } from "@/lib/db/email-campaigns";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -38,16 +37,6 @@ export async function POST(req) {
 
     if (!body?.email) {
       return Response.json({ error: "Email is required" }, { status: 400 });
-    }
-
-    const emailLimit = PLAN_DEFINITIONS[session.planId].emailLimit;
-    const emailsSentThisMonth = await getCampaignEmailsSentThisMonthForSalon(session.salonId);
-
-    if (emailLimit !== null && emailsSentThisMonth >= emailLimit) {
-      return Response.json(
-        { error: `Monthly email limit reached. Your ${PLAN_DEFINITIONS[session.planId].name} plan includes ${emailLimit} emails per month.` },
-        { status: 403 },
-      );
     }
 
     const emailFrom = getEmailFrom();

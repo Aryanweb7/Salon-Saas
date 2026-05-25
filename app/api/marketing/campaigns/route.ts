@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { customers } from "@/db/schema";
 import { getSessionContext } from "@/lib/auth";
-import { getCampaignEmailsSentThisMonthForSalon, logCampaignEmail } from "@/lib/db/email-campaigns";
+import { getCampaignSendsThisMonthForSalon, logCampaignEmail } from "@/lib/db/email-campaigns";
 import { sendMarketingEmailBatch } from "@/lib/email";
 import { requireFeature } from "@/lib/gating";
 import { PLAN_DEFINITIONS } from "@/lib/plans";
@@ -76,13 +76,13 @@ export async function POST(request: Request) {
   }
 
   const emailLimit = PLAN_DEFINITIONS[session.planId].emailLimit;
-  const emailsSentThisMonth = await getCampaignEmailsSentThisMonthForSalon(salonId);
-  const remainingEmails = emailLimit === null ? Number.POSITIVE_INFINITY : Math.max(emailLimit - emailsSentThisMonth, 0);
+  const campaignSendsThisMonth = await getCampaignSendsThisMonthForSalon(salonId);
+  const remainingCampaignSends = emailLimit === null ? Number.POSITIVE_INFINITY : Math.max(emailLimit - campaignSendsThisMonth, 0);
 
-  if (remainingEmails <= 0) {
+  if (remainingCampaignSends <= 0) {
     return NextResponse.json(
       {
-        error: `Monthly email campaign limit reached. Your ${PLAN_DEFINITIONS[session.planId].name} plan includes ${emailLimit} campaign emails per month.`,
+        error: `Monthly email campaign limit reached. Your ${PLAN_DEFINITIONS[session.planId].name} plan includes ${emailLimit} campaign sends per month.`,
         upgradeRequired: session.planId === "free" || session.planId === "basic",
       },
       { status: 403 },
@@ -96,20 +96,10 @@ export async function POST(request: Request) {
       email: customers.email,
     })
     .from(customers)
-    .where(audienceWhere(salonId, parsed.data.audience))
-    .limit(500);
+    .where(audienceWhere(salonId, parsed.data.audience));
 
   const sendableRows = rows.filter((customer) => customer.email?.trim());
-
-  if (sendableRows.length > remainingEmails) {
-    return NextResponse.json(
-      {
-        error: `This campaign has ${sendableRows.length} email recipient(s), but your ${PLAN_DEFINITIONS[session.planId].name} plan has ${remainingEmails} email(s) left this month.`,
-        upgradeRequired: session.planId === "free" || session.planId === "basic",
-      },
-      { status: 403 },
-    );
-  }
+  const campaignId = crypto.randomUUID();
 
   const result = {
     total: rows.length,
@@ -153,6 +143,7 @@ export async function POST(request: Request) {
         logCampaignEmail({
           salonId,
           customerId: customer.id,
+          campaignId,
           email: customer.email ?? "",
           title: customer.title,
           audience: parsed.data.audience,
@@ -170,6 +161,7 @@ export async function POST(request: Request) {
         logCampaignEmail({
           salonId,
           customerId: customer.id,
+          campaignId,
           email: customer.email ?? "",
           title: customer.title,
           audience: parsed.data.audience,

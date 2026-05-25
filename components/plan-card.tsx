@@ -19,7 +19,7 @@ export function PlanCard({ planId }: { planId: keyof typeof PLAN_DEFINITIONS }) 
       <ul className="space-y-3 text-sm text-[var(--muted-foreground)]">
         <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" /> <span>{plan.staffLimit ?? "Unlimited"} staff users</span></li>
         <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" /> <span>{plan.customerLimit ?? "Unlimited"} customers/month</span></li>
-        <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" /> <span>{plan.emailLimit ?? "Unlimited"} campaign emails/month</span></li>
+        <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" /> <span>{plan.emailLimit ?? "Unlimited"} campaign sends/month</span></li>
         {plan.features.birthdayCampaigns ? (
           <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" /> <span>Birthday-only campaigns</span></li>
         ) : null}
