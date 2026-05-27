@@ -8,10 +8,13 @@ interface Customer {
   id: string;
   name: string;
   phone?: string;
+  email?: string;
   birthday?: string;
   gender?: string;
+  preferredStaffId?: string;
   lastVisit?: string;
   preferredStylist?: string;
+  notes?: string;
 }
 
 interface VisitModalProps {
@@ -19,6 +22,7 @@ interface VisitModalProps {
   title?: string;
   description?: string;
   customers: Customer[];
+  staffOptions?: Array<{ id: string; name: string }>;
   onSuccess?: () => void;
 }
 
@@ -27,6 +31,7 @@ export function VisitModal({
   title = "Record a Visit",
   description = "Add a new customer visit and services",
   customers,
+  staffOptions = [],
   onSuccess,
 }: VisitModalProps) {
   const [open, setOpen] = useState(false);
@@ -46,7 +51,7 @@ export function VisitModal({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <VisitForm customers={customers} onSuccess={handleSuccess} />
+        <VisitForm customers={customers} staffOptions={staffOptions} onSuccess={handleSuccess} />
       </DialogContent>
     </Dialog>
   );

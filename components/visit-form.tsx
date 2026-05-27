@@ -14,22 +14,34 @@ interface Customer {
   id: string;
   name: string;
   phone?: string;
+  email?: string;
   birthday?: string;
   gender?: string;
+  preferredStaffId?: string;
   lastVisit?: string;
   preferredStylist?: string;
+  notes?: string;
 }
 
 interface VisitFormProps {
   customers: Customer[];
+  staffOptions?: Array<{ id: string; name: string }>;
   onSuccess?: () => void;
 }
 
 const SERVICES = ["Haircut", "Facial", "Other"];
+const NO_PREFERRED_STAFF = "none";
 
-export function VisitForm({ customers, onSuccess }: VisitFormProps) {
+export function VisitForm({ customers, staffOptions = [], onSuccess }: VisitFormProps) {
   const [formData, setFormData] = useState<VisitFormData>({
     customerId: "",
+    customerName: "",
+    customerPhone: "",
+    customerEmail: "",
+    customerBirthday: "",
+    customerGender: "",
+    preferredStaffId: "",
+    customerNotes: "",
     services: [],
     amount: "",
     visitedAt: new Date().toISOString().split("T")[0],
@@ -65,7 +77,37 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value === NO_PREFERRED_STAFF ? "" : value }));
+  };
+
+  const clearSelectedCustomer = () => {
+    setFormData((prev) => ({
+      ...prev,
+      customerId: "",
+      customerName: "",
+      customerPhone: "",
+      customerEmail: "",
+      customerBirthday: "",
+      customerGender: "",
+      preferredStaffId: "",
+      customerNotes: "",
+    }));
+    setCustomerQuery("");
+  };
+
+  const selectCustomer = (customer: Customer) => {
+    setFormData((prev) => ({
+      ...prev,
+      customerId: customer.id,
+      customerName: customer.name,
+      customerPhone: customer.phone ?? "",
+      customerEmail: customer.email ?? "",
+      customerBirthday: customer.birthday ?? "",
+      customerGender: customer.gender ?? "",
+      preferredStaffId: customer.preferredStaffId ?? "",
+      customerNotes: customer.notes ?? "",
+    }));
+    setCustomerQuery(customer.name);
   };
 
   const handleServiceChange = (service: string, checked: boolean) => {
@@ -80,8 +122,8 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!formData.customerId) {
-      toast.error("Please select a customer");
+    if (!formData.customerId && (!formData.customerName?.trim() || !formData.customerPhone?.trim())) {
+      toast.error("Please enter customer name and phone");
       return;
     }
 
@@ -104,6 +146,13 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
         toast.success("Visit recorded successfully");
         setFormData({
           customerId: "",
+          customerName: "",
+          customerPhone: "",
+          customerEmail: "",
+          customerBirthday: "",
+          customerGender: "",
+          preferredStaffId: "",
+          customerNotes: "",
           services: [],
           amount: "",
           visitedAt: new Date().toISOString().split("T")[0],
@@ -111,6 +160,7 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
           paymentMethod: "",
           notes: "",
         });
+        setCustomerQuery("");
         onSuccess?.();
       } else {
         toast.error(result.error || "Something went wrong");
@@ -126,14 +176,14 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="customerId">Customer *</Label>
+          <Label htmlFor="customerId">Find Existing Customer</Label>
           <div className="space-y-2">
             <Input
               id="customerId"
               value={customerQuery}
               onChange={(event) => {
                 setCustomerQuery(event.target.value);
-                handleSelectChange("customerId", "");
+                clearSelectedCustomer();
               }}
               placeholder="Search customer by name or phone"
             />
@@ -142,10 +192,7 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
                 <button
                   key={customer.id}
                   type="button"
-                  onClick={() => {
-                    handleSelectChange("customerId", customer.id);
-                    setCustomerQuery(customer.name);
-                  }}
+                  onClick={() => selectCustomer(customer)}
                   className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm hover:bg-[var(--muted)]"
                 >
                   <span className="min-w-0">
@@ -165,6 +212,87 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
               </p>
             ) : null}
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="customerName">Customer Name *</Label>
+          <Input
+            id="customerName"
+            name="customerName"
+            value={formData.customerName}
+            onChange={handleChange}
+            placeholder="Customer name"
+            required={!formData.customerId}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="customerPhone">Phone *</Label>
+          <Input
+            id="customerPhone"
+            name="customerPhone"
+            value={formData.customerPhone}
+            onChange={handleChange}
+            placeholder="Phone number"
+            required={!formData.customerId}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="customerEmail">Email</Label>
+          <Input
+            id="customerEmail"
+            name="customerEmail"
+            type="email"
+            value={formData.customerEmail}
+            onChange={handleChange}
+            placeholder="email@example.com"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="customerBirthday">Birthday</Label>
+          <Input
+            id="customerBirthday"
+            name="customerBirthday"
+            type="date"
+            value={formData.customerBirthday}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="customerGender">Gender</Label>
+          <Select value={formData.customerGender} onValueChange={(value) => handleSelectChange("customerGender", value)}>
+            <SelectTrigger id="customerGender">
+              <SelectValue placeholder="Select gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Male">Male</SelectItem>
+              <SelectItem value="Female">Female</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="preferredStaffId">Preferred Stylist</Label>
+          <Select
+            value={formData.preferredStaffId || NO_PREFERRED_STAFF}
+            onValueChange={(value) => handleSelectChange("preferredStaffId", value)}
+          >
+            <SelectTrigger id="preferredStaffId">
+              <SelectValue placeholder="Select preferred stylist" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_PREFERRED_STAFF}>No preferred stylist</SelectItem>
+              {staffOptions.map((member) => (
+                <SelectItem key={member.id} value={member.id}>
+                  {member.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
@@ -207,6 +335,17 @@ export function VisitForm({ customers, onSuccess }: VisitFormProps) {
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="customerNotes">Customer Notes</Label>
+        <Textarea
+          id="customerNotes"
+          name="customerNotes"
+          value={formData.customerNotes}
+          onChange={handleChange}
+          placeholder="Add notes about this customer..."
+        />
       </div>
 
       <div className="space-y-2">

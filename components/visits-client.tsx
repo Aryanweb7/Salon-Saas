@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { getVisitsForSalonAction } from "@/app/actions/visits";
@@ -14,10 +15,13 @@ interface Customer {
   id: string;
   name: string;
   phone?: string;
+  email?: string;
   birthday?: string;
   gender?: string;
+  preferredStaffId?: string;
   lastVisit?: string;
   preferredStylist?: string;
+  notes?: string;
 }
 
 interface Visit {
@@ -33,12 +37,15 @@ interface Visit {
 export function VisitsClient({
   initialCustomers,
   initialVisits,
+  staffOptions,
   readOnly,
 }: {
   initialCustomers: Customer[];
   initialVisits: Visit[];
+  staffOptions: Array<{ id: string; name: string }>;
   readOnly: boolean;
 }) {
+  const router = useRouter();
   const [visits, setVisits] = useState<Visit[]>(initialVisits);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -56,6 +63,7 @@ export function VisitsClient({
 
   const handleVisitAdded = async () => {
     await loadVisits();
+    router.refresh();
   };
 
   return (
@@ -65,15 +73,14 @@ export function VisitsClient({
           <h1 className="text-3xl font-semibold sm:text-4xl">Visit history & billing</h1>
           <p className="mt-2 text-[var(--muted-foreground)]">Track every service sold, payment method used, and team member attached to revenue.</p>
         </div>
-        {initialCustomers.length > 0 ? (
-          <VisitModal
-            trigger={<Button className="w-full sm:w-auto" disabled={readOnly}>Record Visit</Button>}
-            title="Record a Visit"
-            description="Add a new customer visit and services"
-            customers={initialCustomers}
-            onSuccess={handleVisitAdded}
-          />
-        ) : null}
+        <VisitModal
+          trigger={<Button className="w-full sm:w-auto" disabled={readOnly}>Record Visit</Button>}
+          title="Record a Visit"
+          description="Add a new customer visit and services"
+          customers={initialCustomers}
+          staffOptions={staffOptions}
+          onSuccess={handleVisitAdded}
+        />
       </div>
 
       <Card className="overflow-x-auto">
