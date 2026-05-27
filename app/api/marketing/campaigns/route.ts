@@ -137,45 +137,47 @@ export async function POST(request: Request) {
 
   try {
     await sendMarketingEmailBatch(messages);
-
-    await Promise.all(
-      sendableCustomers.map((customer) =>
-        logCampaignEmail({
-          salonId,
-          customerId: customer.id,
-          campaignId,
-          email: customer.email ?? "",
-          title: customer.title,
-          audience: parsed.data.audience,
-          status: "sent",
-        }),
-      ),
-    );
-
-    result.sent = sendableCustomers.length;
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Failed to send campaign";
 
-    await Promise.all(
-      sendableCustomers.map((customer) =>
-        logCampaignEmail({
-          salonId,
-          customerId: customer.id,
-          campaignId,
-          email: customer.email ?? "",
-          title: customer.title,
-          audience: parsed.data.audience,
-          status: "failed",
-          error: reason,
-        }).catch(() => null),
-      ),
-    );
+    await logCampaignEmail({
+      salonId,
+      campaignId,
+      email: sendableCustomers[0]?.email ?? "campaign@salonflow.local",
+      title: renderTemplate(parsed.data.title, {
+        customer_name: sendableCustomers[0]?.name ?? "Customer",
+        salon_name: session.salonName ?? "our salon",
+      }),
+      audience: parsed.data.audience,
+      status: "failed",
+      error: reason,
+    }).catch(() => null);
 
     result.failed = sendableCustomers.length;
     result.failedRecipients = sendableCustomers.map((customer) => ({
       name: customer.name,
       reason,
     }));
+
+    return NextResponse.json(result);
+  }
+
+  result.sent = sendableCustomers.length;
+
+  if (sendableCustomers.length > 0) {
+    await logCampaignEmail({
+      salonId,
+      campaignId,
+      email: sendableCustomers[0]?.email ?? "campaign@salonflow.local",
+      title: renderTemplate(parsed.data.title, {
+        customer_name: sendableCustomers[0]?.name ?? "Customer",
+        salon_name: session.salonName ?? "our salon",
+      }),
+      audience: parsed.data.audience,
+      status: "sent",
+    }).catch((error) => {
+      console.error("Failed to log campaign email", error);
+    });
   }
 
   return NextResponse.json(result);
