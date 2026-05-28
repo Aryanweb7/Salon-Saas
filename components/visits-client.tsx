@@ -70,7 +70,7 @@ export function VisitsClient({
     <div className="min-w-0 space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div className="min-w-0">
-          <h1 className="text-3xl font-semibold sm:text-4xl">Visit history & billing</h1>
+          <h1 className="text-2xl font-semibold sm:text-3xl lg:text-4xl">Visit history & billing</h1>
           <p className="mt-2 text-[var(--muted-foreground)]">Track every service sold, payment method used, and team member attached to revenue.</p>
         </div>
         <VisitModal
@@ -83,49 +83,51 @@ export function VisitsClient({
         />
       </div>
 
-      <Card className="overflow-x-auto">
+      <Card>
         <CardTitle className="mb-2">Recent visits</CardTitle>
         <CardDescription className="mb-4">
           {visits.length} visit{visits.length !== 1 ? "s" : ""}
         </CardDescription>
-        <Table className="min-w-[720px]">
-          <THead>
-            <TR>
-              <TH>Service</TH>
-              <TH>Amount</TH>
-              <TH>Staff</TH>
-              <TH>Date</TH>
-              <TH>Payment Method</TH>
-              <TH>Notes</TH>
-            </TR>
-          </THead>
-          <TBody>
-            {isRefreshing ? (
+        <div className="-mx-4 sm:mx-0">
+          <Table className="min-w-[680px] sm:min-w-[720px]">
+            <THead>
               <TR>
-                <TD colSpan={6} className="py-4 text-center">
-                  Refreshing visits...
-                </TD>
+                <TH>Service</TH>
+                <TH>Amount</TH>
+                <TH>Staff</TH>
+                <TH>Date</TH>
+                <TH>Payment Method</TH>
+                <TH>Notes</TH>
               </TR>
-            ) : visits.length === 0 ? (
-              <TR>
-                <TD colSpan={6} className="py-4 text-center">
-                  No visits recorded yet
-                </TD>
-              </TR>
-            ) : (
-              visits.map((visit) => (
-                <TR key={visit.id}>
-                  <TD className="font-medium">{visit.service}</TD>
-                  <TD>{formatCurrency(visit.amount)}</TD>
-                  <TD>{visit.staff}</TD>
-                  <TD>{visit.date}</TD>
-                  <TD>{visit.paymentMethod}</TD>
-                  <TD>{visit.notes}</TD>
+            </THead>
+            <TBody>
+              {isRefreshing ? (
+                <TR>
+                  <TD colSpan={6} className="py-4 text-center">
+                    Refreshing visits...
+                  </TD>
                 </TR>
-              ))
-            )}
-          </TBody>
-        </Table>
+              ) : visits.length === 0 ? (
+                <TR>
+                  <TD colSpan={6} className="py-4 text-center">
+                    No visits recorded yet
+                  </TD>
+                </TR>
+              ) : (
+                visits.map((visit) => (
+                  <TR key={visit.id}>
+                    <TD className="font-medium">{visit.service}</TD>
+                    <TD>{formatCurrency(visit.amount)}</TD>
+                    <TD>{visit.staff}</TD>
+                    <TD>{visit.date}</TD>
+                    <TD>{visit.paymentMethod}</TD>
+                    <TD>{visit.notes}</TD>
+                  </TR>
+                ))
+              )}
+            </TBody>
+          </Table>
+        </div>
       </Card>
     </div>
   );

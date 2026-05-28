@@ -18,7 +18,7 @@ export default async function AppointmentsPage() {
     <div className="min-w-0 space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div className="min-w-0">
-          <h1 className="text-3xl font-semibold sm:text-4xl">Appointments</h1>
+          <h1 className="text-2xl font-semibold sm:text-3xl lg:text-4xl">Appointments</h1>
           <p className="mt-2 text-[var(--muted-foreground)]">List and calendar views, walk-ins, reschedules, and staff assignment all live here.</p>
         </div>
         <AppointmentBookingModal customers={options.customers} staff={options.staff} readOnly={false} />

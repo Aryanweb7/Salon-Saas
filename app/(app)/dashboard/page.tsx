@@ -30,14 +30,14 @@ export default async function DashboardPage() {
       <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div className="min-w-0">
           <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Owner dashboard</p>
-          <h1 className="text-3xl font-semibold sm:text-4xl">Today&apos;s salon pulse</h1>
+          <h1 className="text-2xl font-semibold sm:text-3xl lg:text-4xl">Today&apos;s salon pulse</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Badge tone="success">All automations healthy</Badge>
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Total customers" value={customerStats.totalCustomers.toString()} trend={customerStats.customerTrend} />
         <MetricCard label="Today appointments" value={appointmentStats.todayAppointments.toString()} trend={appointmentStats.appointmentTrend} />
         <MetricCard label="This month revenue" value={formatCurrency(customerStats.monthRevenue)} trend={customerStats.revenueTrend} />

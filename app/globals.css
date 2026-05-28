@@ -45,6 +45,7 @@
 
 html {
   scroll-behavior: auto;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -73,6 +74,12 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px;
 }
 
 .glass {

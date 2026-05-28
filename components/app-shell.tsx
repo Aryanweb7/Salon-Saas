@@ -11,6 +11,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 
+import { MobileAppNav } from "@/components/mobile-app-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,8 +40,14 @@ export async function AppShell({
   const hasPaidPlan = session.planId !== "free";
 
   return (
-    <div className="grid min-h-screen min-w-0 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <aside className="border-b border-[var(--border)] bg-[var(--background)] p-4 lg:border-b-0 lg:border-r lg:p-5">
+    <div className="min-h-screen min-w-0 lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
+      <MobileAppNav
+        salonName={session.salonName ?? "Salon"}
+        email={session.user?.email ?? session.email ?? ""}
+        planId={session.planId}
+        hasPaidPlan={hasPaidPlan}
+      />
+      <aside className="sticky top-0 hidden h-screen overflow-y-auto border-r border-[var(--border)] bg-[var(--background)] p-5 lg:block">
         {/* Brand */}
         <Card className="mb-4 lg:mb-5">
           <div className="flex items-center gap-3">
@@ -58,7 +65,7 @@ export async function AppShell({
         </Card>
 
         {/* Navigation */}
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1 lg:mb-5 lg:block lg:space-y-1 lg:overflow-visible lg:pb-0">
+        <div className="mb-5 space-y-1">
           {ownerNav.map((item) => {
             const Icon = item.icon;
 
@@ -66,7 +73,7 @@ export async function AppShell({
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex shrink-0 items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium lg:shrink"
+                className="flex min-h-11 items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium"
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
@@ -97,7 +104,7 @@ export async function AppShell({
         </Card>
       </aside>
 
-      <main className="min-w-0 overflow-x-hidden p-4 md:p-8">
+      <main className="min-w-0 overflow-x-hidden px-3 py-4 sm:px-4 md:px-6 md:py-6 xl:px-8 xl:py-8">
         {children}
       </main>
     </div>

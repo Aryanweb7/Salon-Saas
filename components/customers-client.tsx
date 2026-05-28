@@ -104,7 +104,7 @@ export function CustomersClient({
     <div className="min-w-0 space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div className="min-w-0">
-          <h1 className="text-3xl font-semibold sm:text-4xl">Customer CRM</h1>
+          <h1 className="text-2xl font-semibold sm:text-3xl lg:text-4xl">Customer CRM</h1>
           <p className="mt-2 text-[var(--muted-foreground)]">Search, filter, and retain every guest with visit context and automation triggers.</p>
         </div>
         <CustomerModal
@@ -131,8 +131,8 @@ export function CustomersClient({
         <CardDescription className="mb-4">
           {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? "s" : ""}
         </CardDescription>
-        <div className="overflow-x-auto">
-          <Table className="min-w-[760px]">
+        <div className="-mx-4 sm:mx-0">
+          <Table className="min-w-[720px] sm:min-w-[760px]">
             <THead>
               <TR>
                 <TH>Name</TH>

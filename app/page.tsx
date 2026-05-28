@@ -49,11 +49,11 @@ const features = [
 
 export default function HomePage() {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-14">
-      <section className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="space-y-6">
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8 md:px-8 md:py-12">
+      <section className="grid items-center gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:gap-8">
+        <div className="space-y-5 sm:space-y-6">
           <Badge tone="warning">Built for salons, barbershops, beauty parlors, and grooming studios</Badge>
-          <h1 className="max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl md:text-7xl">
+          <h1 className="max-w-4xl text-3xl font-bold tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl">
             SalonFlow helps salon owners manage bookings, customers, visits, and email campaigns.
           </h1>
           <p className="max-w-2xl text-base text-[var(--muted-foreground)] sm:text-lg">
@@ -100,7 +100,7 @@ export default function HomePage() {
         </Card>
       </section>
 
-      <section className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <section className="mt-8 grid gap-4 sm:mt-10 md:grid-cols-2 xl:grid-cols-3">
         {features.map((feature) => {
           const Icon = feature.icon;
           return (
@@ -108,7 +108,7 @@ export default function HomePage() {
               <div className="inline-flex rounded-2xl bg-[var(--muted)] p-3">
                 <Icon className="h-5 w-5" />
               </div>
-              <h2 className="text-xl font-semibold">{feature.title}</h2>
+              <h2 className="text-lg font-semibold sm:text-xl">{feature.title}</h2>
               <p className="text-sm text-[var(--muted-foreground)]">{feature.description}</p>
             </Card>
           );

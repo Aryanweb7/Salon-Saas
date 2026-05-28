@@ -16,7 +16,7 @@ export default async function ReportsPage() {
   return (
     <div className="min-w-0 space-y-6">
       <div className="min-w-0">
-        <h1 className="text-3xl font-semibold sm:text-4xl">Reports</h1>
+        <h1 className="text-2xl font-semibold sm:text-3xl lg:text-4xl">Reports</h1>
         <p className="mt-2 text-[var(--muted-foreground)]">Daily, weekly, monthly, repeat-customer, and service performance intelligence.</p>
       </div>
       <div className="grid gap-4 xl:grid-cols-2">

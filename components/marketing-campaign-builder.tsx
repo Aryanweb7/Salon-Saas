@@ -133,7 +133,7 @@ export function MarketingCampaignBuilder({
       <section className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div className="min-w-0 max-w-3xl">
           <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Marketing</p>
-          <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">Create Campaign</h1>
+          <h1 className="mt-2 text-2xl font-semibold sm:text-3xl lg:text-4xl">Create Campaign</h1>
           <p className="mt-3 text-[var(--muted-foreground)]">
             Build a polished offer, preview it live, choose the right audience, and send it through email.
           </p>

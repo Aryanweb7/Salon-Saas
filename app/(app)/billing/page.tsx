@@ -37,7 +37,7 @@ export default async function BillingPage() {
   if (!session.salonId) {
     return (
       <div className="space-y-4">
-        <h1 className="text-3xl font-semibold sm:text-4xl">Billing</h1>
+        <h1 className="text-2xl font-semibold sm:text-3xl lg:text-4xl">Billing</h1>
         <p className="text-[var(--muted-foreground)]">No salon is attached to this account.</p>
       </div>
     );
@@ -54,13 +54,13 @@ export default async function BillingPage() {
   return (
     <div className="min-w-0 space-y-6">
       <div className="min-w-0">
-        <h1 className="text-3xl font-semibold sm:text-4xl">Billing</h1>
+        <h1 className="text-2xl font-semibold sm:text-3xl lg:text-4xl">Billing</h1>
         <p className="mt-2 text-[var(--muted-foreground)]">
           Review subscription health, see upcoming charges, and manage plan changes.
         </p>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.1fr_0.9fr_1fr]">
         <Card className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Badge tone={hasActivePlan ? "success" : "danger"}>{hasActivePlan ? "Current plan" : "No active plan"}</Badge>
@@ -164,7 +164,7 @@ export default async function BillingPage() {
             Compare plan limits, automation access, and monthly pricing.
           </p>
         </div>
-        <div className="grid gap-5 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
           <PlanCard planId="free" />
           <PlanCard planId="basic" />
           <PlanCard planId="pro" />

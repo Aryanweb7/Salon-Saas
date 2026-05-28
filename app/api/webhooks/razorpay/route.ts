@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  const event = JSON.parse(payload) as {
+  let event: {
     event?: string;
     payload?: {
       payment?: {
@@ -42,6 +42,12 @@ export async function POST(request: Request) {
     };
   };
 
+  try {
+    event = JSON.parse(payload);
+  } catch {
+    return NextResponse.json({ error: "Invalid webhook payload" }, { status: 400 });
+  }
+
   const subscriptionId =
     event.payload?.invoice?.entity?.subscription_id ||
     event.payload?.payment?.entity?.subscription_id ||
@@ -51,11 +57,16 @@ export async function POST(request: Request) {
     event.payload?.invoice?.entity?.notes?.salonId ||
     event.payload?.subscription?.entity?.notes?.salonId;
 
-  if (!salonId && !subscriptionId) {
+  if (!subscriptionId && !salonId) {
     return NextResponse.json({ error: "No salon or subscription ID found" }, { status: 400 });
   }
 
   try {
+    const isSubscriptionActivated =
+      event.event === "subscription.authenticated" ||
+      event.event === "subscription.activated" ||
+      event.event === "subscription.charged";
+
     if (event.event === "invoice.paid" || event.event === "payment.captured") {
       await updateSubscriptionStatusFromPayment({
         salonId: salonId ?? "",
@@ -75,11 +86,11 @@ export async function POST(request: Request) {
       });
     }
 
-    if (event.event === "subscription.activated" || event.event === "subscription.charged") {
+    if (isSubscriptionActivated) {
       await updateSubscriptionStatusFromPayment({
         salonId: salonId ?? "",
         status: "active",
-        paymentId: event.payload?.subscription?.entity?.id,
+        paymentId: event.payload?.payment?.entity?.id ?? event.payload?.invoice?.entity?.id ?? event.payload?.subscription?.entity?.id,
         razorpaySubscriptionId: subscriptionId,
       });
     }
@@ -108,7 +119,7 @@ export async function POST(request: Request) {
       workflow: [
         "invoice.paid/payment.captured -> active",
         "payment.failed -> past_due",
-        "subscription.activated -> active",
+        "subscription.authenticated/activated/charged -> active",
         "subscription.failed -> past_due",
         "subscription.cancelled -> downgrade to Free",
         "cron after 3 days -> downgrade overdue paid plans to Free",

@@ -2,9 +2,19 @@ import crypto from "node:crypto";
 import Razorpay from "razorpay";
 
 export function verifyRazorpaySignature(payload: string, signature: string) {
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET ?? "demo-webhook-secret";
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+
+  if (!secret || !signature) {
+    return false;
+  }
+
   const expected = crypto.createHmac("sha256", secret).update(payload).digest("hex");
-  return expected === signature;
+
+  try {
+    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+  } catch {
+    return false;
+  }
 }
 
 export function verifyRazorpayPaymentSignature(params: {

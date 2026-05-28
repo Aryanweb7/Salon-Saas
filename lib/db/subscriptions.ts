@@ -150,9 +150,10 @@ export async function updateSubscriptionFromRazorpay(params: {
       .select({
         id: subscriptions.id,
         planId: subscriptions.planId,
+        salonId: subscriptions.salonId,
       })
       .from(subscriptions)
-      .where(eq(subscriptions.razorpaySubscriptionId, params.razorpaySubscriptionId))
+      .where(and(eq(subscriptions.razorpaySubscriptionId, params.razorpaySubscriptionId), eq(subscriptions.salonId, params.salonId)))
       .limit(1);
 
     if (!subscription) {
@@ -170,7 +171,7 @@ export async function updateSubscriptionFromRazorpay(params: {
       .where(eq(subscriptions.id, subscription.id));
 
     if (params.status === "overdue" || params.status === "expired" || params.status === "canceled") {
-      await downgradeSalonToFree(params.salonId);
+      await downgradeSalonToFree(subscription.salonId);
     } else {
       await db
         .update(salons)
@@ -181,13 +182,13 @@ export async function updateSubscriptionFromRazorpay(params: {
           nextBillingDate: params.status === "active" ? sql`now() + interval '30 day'` : undefined,
           updatedAt: new Date(),
         })
-        .where(eq(salons.id, params.salonId));
+        .where(eq(salons.id, subscription.salonId));
     }
 
     await db
       .insert(payments)
       .values({
-        salonId: params.salonId,
+        salonId: subscription.salonId,
         subscriptionId: subscription.id,
         amount: "0",
         provider: "Razorpay",
