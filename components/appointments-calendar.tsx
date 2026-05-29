@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getIndiaDateKey } from "@/lib/india-time";
 
 type Appointment = {
   id: string;
@@ -26,7 +27,7 @@ function startOfWeek(date: Date) {
 }
 
 function formatDayKey(date: Date) {
-  return date.toISOString().slice(0, 10);
+  return getIndiaDateKey(date);
 }
 
 export function AppointmentsCalendar({ appointments }: { appointments: Appointment[] }) {
@@ -42,7 +43,7 @@ export function AppointmentsCalendar({ appointments }: { appointments: Appointme
 
   const appointmentsByDay = useMemo(() => {
     return appointments.reduce<Record<string, Appointment[]>>((acc, appointment) => {
-      const key = appointment.startAt.slice(0, 10);
+      const key = getIndiaDateKey(new Date(appointment.startAt));
       acc[key] = acc[key] ?? [];
       acc[key].push(appointment);
       return acc;
