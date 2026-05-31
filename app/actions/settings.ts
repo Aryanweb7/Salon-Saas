@@ -11,6 +11,7 @@ const businessProfileSchema = z.object({
   salonName: z.string().min(1, "Salon name is required").max(160),
   city: z.string().max(120).optional().or(z.literal("")),
   gstNumber: z.string().max(40).optional().or(z.literal("")),
+  contactNumber: z.string().max(32).optional().or(z.literal("")),
   taxBehavior: z.enum(["inclusive", "exclusive", "not_applicable"]),
   receiptIdentity: z.string().max(160).optional().or(z.literal("")),
   brandingEnabled: z.boolean(),

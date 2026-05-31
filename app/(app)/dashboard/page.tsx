@@ -8,6 +8,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { getSessionContext } from "@/lib/auth";
 import { getAppointmentSeries, getDashboardAppointmentStats, listTodaysAppointmentsForSalon } from "@/lib/db/appointments";
 import { getCustomerStats } from "@/lib/db/customers";
+import { getBillingAnalyticsForSalon } from "@/lib/db/invoices";
 import { getRevenueSeries } from "@/lib/db/reports";
 import { getStaffDashboardStats } from "@/lib/db/staff";
 import { formatCurrency, formatPercent } from "@/lib/utils";
@@ -17,13 +18,20 @@ export default async function DashboardPage() {
 
   const session = await getSessionContext();
   const salonId = session.salonId ?? "";
-  const [customerStats, appointmentStats, revenueSeries, appointmentSeries, appointments, staffStats] = await Promise.all([
+  const [customerStats, appointmentStats, revenueSeries, appointmentSeries, appointments, staffStats, billingStats] = await Promise.all([
     getCustomerStats(salonId),
     getDashboardAppointmentStats(salonId),
     getRevenueSeries(salonId),
     getAppointmentSeries(salonId),
     listTodaysAppointmentsForSalon(salonId),
     getStaffDashboardStats(salonId),
+    getBillingAnalyticsForSalon(salonId).catch(() => ({
+      todaysRevenue: 0,
+      monthlyRevenue: 0,
+      totalInvoices: 0,
+      averageTicketSize: 0,
+      topServices: [] as Array<{ name: string; revenue: number; quantity: number }>,
+    })),
   ]);
   return (
     <div className="min-w-0 space-y-6">
@@ -43,6 +51,10 @@ export default async function DashboardPage() {
         <MetricCard label="This month revenue" value={formatCurrency(customerStats.monthRevenue)} trend={customerStats.revenueTrend} />
         <MetricCard label="Staff count" value={staffStats.totalStaff.toString()} trend={staffStats.staffTrend} />
         <MetricCard label="Returning customers" value={formatPercent(customerStats.returningCustomers)} trend={customerStats.returningTrend} />
+        <MetricCard label="Today's billing revenue" value={formatCurrency(billingStats.todaysRevenue)} trend="from invoices" />
+        <MetricCard label="Invoice monthly revenue" value={formatCurrency(billingStats.monthlyRevenue)} trend="paid invoices" />
+        <MetricCard label="Total invoices" value={billingStats.totalInvoices.toString()} trend="all time" />
+        <MetricCard label="Average ticket size" value={formatCurrency(billingStats.averageTicketSize)} trend="paid invoices" />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
@@ -77,6 +89,32 @@ export default async function DashboardPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </Card>
+      </section>
+
+      <section>
+        <Card className="space-y-4">
+          <div>
+            <CardTitle>Top services by revenue</CardTitle>
+            <CardDescription>Ranked from paid invoice line items.</CardDescription>
+          </div>
+          <div className="space-y-3">
+            {billingStats.topServices.length ? (
+              billingStats.topServices.map((service) => (
+                <div key={service.name} className="flex flex-col justify-between gap-2 rounded-2xl border p-4 sm:flex-row sm:items-center">
+                  <div className="min-w-0">
+                    <p className="break-words font-medium">{service.name}</p>
+                    <p className="text-sm text-[var(--muted-foreground)]">{service.quantity} sold</p>
+                  </div>
+                  <p className="font-semibold">{formatCurrency(service.revenue)}</p>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-dashed p-6 text-sm text-[var(--muted-foreground)]">
+                No paid invoice services yet.
+              </div>
+            )}
           </div>
         </Card>
       </section>

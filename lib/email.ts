@@ -20,6 +20,16 @@ interface SendMarketingEmailParams {
   message: string;
 }
 
+interface SendInvoiceEmailParams {
+  to: string;
+  customerName: string;
+  salonName: string;
+  invoiceNumber: string;
+  amount: number;
+  pdfBase64: string;
+  pdfFileName: string;
+}
+
 const RESEND_EMAILS_URL = "https://api.resend.com/emails";
 const RESEND_BATCH_URL = "https://api.resend.com/emails/batch";
 const MAX_BATCH_SIZE = 100;
@@ -231,11 +241,66 @@ export async function sendMarketingEmailBatch(messages: SendMarketingEmailParams
   }
 }
 
+export async function sendInvoiceEmail({
+  to,
+  customerName,
+  salonName,
+  invoiceNumber,
+  amount,
+  pdfBase64,
+  pdfFileName,
+}: SendInvoiceEmailParams) {
+  const amountCopy = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(amount);
+
+  await sendEmail({
+    to,
+    subject: `Your Invoice from ${salonName}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111">
+        <div style="border:1px solid #eee;border-radius:16px;padding:24px;max-width:600px">
+          <h2 style="margin:0 0 16px">Your invoice from ${escapeHtml(salonName)}</h2>
+          <p>Hello ${escapeHtml(customerName)},</p>
+          <p>Thank you for visiting ${escapeHtml(salonName)}.</p>
+          <p>Please find your invoice attached.</p>
+          <p><strong>Invoice Number:</strong> ${escapeHtml(invoiceNumber)}<br />
+          <strong>Amount Paid:</strong> ${escapeHtml(amountCopy)}</p>
+          <p>We appreciate your business and look forward to serving you again.</p>
+          <p>Regards,<br />${escapeHtml(salonName)}</p>
+        </div>
+      </div>
+    `,
+    text: `Hello ${customerName},
+
+Thank you for visiting ${salonName}.
+
+Please find your invoice attached.
+
+Invoice Number: ${invoiceNumber}
+Amount Paid: ${amountCopy}
+
+We appreciate your business and look forward to serving you again.
+
+Regards,
+${salonName}`,
+    attachments: [
+      {
+        filename: pdfFileName,
+        content: pdfBase64,
+      },
+    ],
+  });
+}
+
 async function sendEmail(params: {
   to: string;
   subject: string;
   html: string;
   text?: string;
+  attachments?: Array<{ filename: string; content: string }>;
 }) {
   const apiKey = getResendApiKey();
   const from = getEmailFrom();
@@ -252,6 +317,7 @@ async function sendEmail(params: {
       subject: params.subject,
       html: params.html,
       text: params.text,
+      attachments: params.attachments,
     }),
   });
 

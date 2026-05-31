@@ -205,6 +205,65 @@ export const visits = pgTable(
   }),
 );
 
+export const invoices = pgTable(
+  "invoices",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id").notNull().references(() => salons.id, { onDelete: "cascade" }),
+    invoiceNumber: varchar("invoice_number", { length: 60 }).notNull(),
+    invoiceDate: timestamp("invoice_date", { withTimezone: true }).defaultNow().notNull(),
+    salonName: varchar("salon_name", { length: 160 }).notNull(),
+    salonLogoUrl: text("salon_logo_url").default("").notNull(),
+    salonAddress: text("salon_address").default("").notNull(),
+    salonContactNumber: varchar("salon_contact_number", { length: 32 }).default("").notNull(),
+    salonGstNumber: varchar("salon_gst_number", { length: 32 }).default("").notNull(),
+    customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+    customerName: varchar("customer_name", { length: 160 }).notNull(),
+    customerPhone: varchar("customer_phone", { length: 32 }).notNull(),
+    customerEmail: varchar("customer_email", { length: 255 }).default("").notNull(),
+    subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
+    discountType: varchar("discount_type", { length: 20 }).default("fixed").notNull(),
+    discountValue: numeric("discount_value", { precision: 12, scale: 2 }).default("0").notNull(),
+    discountAmount: numeric("discount_amount", { precision: 12, scale: 2 }).default("0").notNull(),
+    taxRate: numeric("tax_rate", { precision: 5, scale: 2 }).default("0").notNull(),
+    taxAmount: numeric("tax_amount", { precision: 12, scale: 2 }).default("0").notNull(),
+    totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(),
+    paymentStatus: varchar("payment_status", { length: 30 }).default("paid").notNull(),
+    paymentMethod: varchar("payment_method", { length: 40 }).notNull(),
+    pdfUrl: text("pdf_url").default("").notNull(),
+    pdfPath: text("pdf_path").default("").notNull(),
+    emailSent: boolean("email_sent").default(false).notNull(),
+    emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => ({
+    salonIdx: index("invoices_salon_idx").on(table.salonId),
+    invoiceNumberIdx: uniqueIndex("invoices_invoice_number_idx").on(table.invoiceNumber),
+    salonInvoiceNumberIdx: index("invoices_salon_invoice_number_idx").on(table.salonId, table.invoiceNumber),
+    invoiceDateIdx: index("invoices_invoice_date_idx").on(table.invoiceDate),
+  }),
+);
+
+export const invoiceItems = pgTable(
+  "invoice_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id").notNull().references(() => salons.id, { onDelete: "cascade" }),
+    invoiceId: uuid("invoice_id").notNull().references(() => invoices.id, { onDelete: "cascade" }),
+    kind: varchar("kind", { length: 20 }).notNull(),
+    name: varchar("name", { length: 180 }).notNull(),
+    quantity: integer("quantity").notNull(),
+    unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
+    total: numeric("total", { precision: 12, scale: 2 }).notNull(),
+    ...timestamps,
+  },
+  (table) => ({
+    salonIdx: index("invoice_items_salon_idx").on(table.salonId),
+    invoiceIdx: index("invoice_items_invoice_idx").on(table.invoiceId),
+    kindIdx: index("invoice_items_kind_idx").on(table.kind),
+  }),
+);
+
 export const staff = pgTable(
   "staff",
   {

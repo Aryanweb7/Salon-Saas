@@ -55,6 +55,7 @@ export function BusinessProfileSettings({
         salonName: String(form.get("salonName") ?? ""),
         city: String(form.get("city") ?? ""),
         gstNumber: String(form.get("gstNumber") ?? ""),
+        contactNumber: String(form.get("contactNumber") ?? ""),
         taxBehavior: taxBehavior as "inclusive" | "exclusive" | "not_applicable",
         receiptIdentity: String(form.get("receiptIdentity") ?? ""),
         brandingEnabled: enabled,
@@ -91,6 +92,9 @@ export function BusinessProfileSettings({
             </Field>
             <Field label="GST number" id="gstNumber">
               <Input id="gstNumber" name="gstNumber" defaultValue={config.gstNumber ?? ""} placeholder="Optional" />
+            </Field>
+            <Field label="Contact number" id="contactNumber">
+              <Input id="contactNumber" name="contactNumber" defaultValue={config.contactNumber ?? ""} placeholder="Invoice phone number" />
             </Field>
             <Field label="Tax behavior" id="taxBehavior">
               <Select value={taxBehavior} onValueChange={setTaxBehavior}>

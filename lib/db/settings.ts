@@ -5,6 +5,7 @@ import { salons, settings } from "@/db/schema";
 
 export type SalonSettingsConfig = {
   gstNumber?: string;
+  contactNumber?: string;
   taxBehavior?: string;
   receiptIdentity?: string;
   appointmentReminderTemplate?: string;
@@ -45,6 +46,7 @@ export async function updateBusinessProfile(
     salonName: string;
     city?: string;
     gstNumber?: string;
+    contactNumber?: string;
     taxBehavior?: string;
     receiptIdentity?: string;
     brandingEnabled: boolean;
@@ -63,6 +65,7 @@ export async function updateBusinessProfile(
     brandingEnabled: data.brandingEnabled,
     config: {
       gstNumber: data.gstNumber || "",
+      contactNumber: data.contactNumber || "",
       taxBehavior: data.taxBehavior || "inclusive",
       receiptIdentity: data.receiptIdentity || data.salonName,
     },
