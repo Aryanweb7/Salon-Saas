@@ -14,6 +14,12 @@ function slugify(input: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+function getFreeTrialEndDate() {
+  const trialEnd = new Date();
+  trialEnd.setMonth(trialEnd.getMonth() + 1);
+  return trialEnd;
+}
+
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => null)) as
     | {
@@ -51,6 +57,7 @@ export async function POST(request: NextRequest) {
   const slug = baseSlug ? `${baseSlug}-${Math.random().toString(36).slice(2, 6)}` : `salon-${Math.random().toString(36).slice(2, 8)}`;
 
   const passwordHash = await bcrypt.hash(password, 10);
+  const freeTrialEnd = getFreeTrialEndDate();
 
   const [salon] = await db
     .insert(salons)
@@ -61,6 +68,7 @@ export async function POST(request: NextRequest) {
       planId: "free",
       status: "active",
       readOnlyMode: false,
+      nextBillingDate: freeTrialEnd,
     })
     .returning({ id: salons.id, name: salons.name });
 
@@ -87,6 +95,7 @@ export async function POST(request: NextRequest) {
     planId: "free",
     status: "active",
     currentPeriodStart: new Date(),
+    currentPeriodEnd: freeTrialEnd,
   });
 
   return NextResponse.json({ ok: true, redirectTo: "/dashboard", email });

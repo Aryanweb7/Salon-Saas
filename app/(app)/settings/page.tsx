@@ -1,12 +1,25 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { BusinessProfileSettings } from "@/components/settings-controls";
+import { SubscriptionSettings } from "@/components/subscription-settings";
 import { getSessionContext } from "@/lib/auth";
 import { getSettingsSnapshot } from "@/lib/db/settings";
+import { getBillingSnapshot } from "@/lib/db/subscriptions";
+
+function addOneMonth(date: Date) {
+  const nextMonth = new Date(date);
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  return nextMonth;
+}
 
 export default async function SettingsPage() {
   const session = await getSessionContext();
-  const snapshot = session.salonId ? await getSettingsSnapshot(session.salonId) : null;
+  const [snapshot, billing] = session.salonId
+    ? await Promise.all([
+        getSettingsSnapshot(session.salonId).catch(() => null),
+        getBillingSnapshot(session.salonId).catch(() => null),
+      ])
+    : [null, null];
   const config = snapshot?.config ?? {};
 
   return (
@@ -31,6 +44,18 @@ export default async function SettingsPage() {
           readOnly={!session.salonId}
         />
       </Card>
+      <SubscriptionSettings
+        currentPlanId={billing?.planId ?? session.planId}
+        status={billing?.status ?? session.subscriptionStatus}
+        renewalDate={
+          billing?.renewalDate ??
+          billing?.nextBillingDate ??
+          (billing?.planId === "free" && (billing.periodStartDate || billing.subscriptionCreatedAt)
+            ? addOneMonth(billing.periodStartDate ?? billing.subscriptionCreatedAt)
+            : null)
+        }
+        hasRemoteSubscription={Boolean(billing?.razorpaySubscriptionId)}
+      />
     </div>
   );
 }

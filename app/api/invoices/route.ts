@@ -33,6 +33,10 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (session.readOnlyMode) {
+      return Response.json({ error: "Your free trial has ended. Upgrade to a plan to continue using all features." }, { status: 403 });
+    }
+
     const payload = createInvoiceSchema.safeParse(await request.json());
 
     if (!payload.success) {

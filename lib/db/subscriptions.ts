@@ -3,14 +3,22 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { payments, salons, subscriptions } from "@/db/schema";
 
+function getFreeTrialEndDate() {
+  const trialEnd = new Date();
+  trialEnd.setMonth(trialEnd.getMonth() + 1);
+  return trialEnd;
+}
+
 async function downgradeSalonToFree(salonId: string) {
+  const freeTrialEnd = getFreeTrialEndDate();
+
   await db
     .update(salons)
     .set({
       planId: "free",
       status: "active",
       readOnlyMode: false,
-      nextBillingDate: null,
+      nextBillingDate: freeTrialEnd,
       updatedAt: new Date(),
     })
     .where(eq(salons.id, salonId));
@@ -31,6 +39,7 @@ async function downgradeSalonToFree(salonId: string) {
     planId: "free",
     status: "active",
     currentPeriodStart: new Date(),
+    currentPeriodEnd: freeTrialEnd,
   });
 }
 
@@ -61,6 +70,8 @@ export async function getBillingSnapshot(salonId: string) {
         planId: subscriptions.planId,
         status: subscriptions.status,
         renewalDate: subscriptions.currentPeriodEnd,
+        periodStartDate: subscriptions.currentPeriodStart,
+        subscriptionCreatedAt: subscriptions.createdAt,
         graceEndsAt: subscriptions.graceEndsAt,
         razorpaySubscriptionId: subscriptions.razorpaySubscriptionId,
         nextBillingDate: salons.nextBillingDate,
@@ -279,6 +290,31 @@ export async function updateSubscriptionStatusFromPayment(params: {
 }
 
 export async function markOverdueSubscriptions() {
+  const expiredFreeRows = await db
+    .select({ salonId: subscriptions.salonId })
+    .from(subscriptions)
+    .where(and(eq(subscriptions.status, "active"), eq(subscriptions.planId, "free"), sql`${subscriptions.currentPeriodEnd} < now()`));
+
+  await db
+    .update(subscriptions)
+    .set({
+      status: "expired",
+      updatedAt: new Date(),
+    })
+    .where(and(eq(subscriptions.status, "active"), eq(subscriptions.planId, "free"), sql`${subscriptions.currentPeriodEnd} < now()`));
+
+  for (const row of expiredFreeRows) {
+    await db
+      .update(salons)
+      .set({
+        status: "expired",
+        readOnlyMode: true,
+        nextBillingDate: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(salons.id, row.salonId));
+  }
+
   await db
     .update(subscriptions)
     .set({
@@ -286,7 +322,7 @@ export async function markOverdueSubscriptions() {
       graceEndsAt: sql`now() + interval '3 day'`,
       updatedAt: new Date(),
     })
-    .where(and(eq(subscriptions.status, "active"), sql`${subscriptions.currentPeriodEnd} < now()`));
+    .where(and(eq(subscriptions.status, "active"), sql`${subscriptions.planId} <> 'free'`, sql`${subscriptions.currentPeriodEnd} < now()`));
 
   await db
     .update(salons)

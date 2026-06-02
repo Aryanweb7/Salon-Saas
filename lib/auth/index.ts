@@ -29,6 +29,7 @@ export async function getSessionContext(): Promise<SessionContext> {
         subscriptionStatus: SubscriptionStatus | null;
         planId: "free" | "basic" | "pro" | null;
         salonName: string | null;
+        currentPeriodEnd: Date | null;
       }
     | undefined;
 
@@ -43,6 +44,7 @@ export async function getSessionContext(): Promise<SessionContext> {
         subscriptionStatus: subscriptions.status,
         planId: subscriptions.planId,
         salonName: salons.name,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
       })
       .from(users)
       .leftJoin(salons, eq(salons.id, users.salonId))
@@ -73,7 +75,12 @@ export async function getSessionContext(): Promise<SessionContext> {
     return fallbackSession.salonOwner;
   }
 
-  const subscriptionStatus = context.subscriptionStatus ?? "active";
+  const isExpiredFreeTrial =
+    context.planId === "free" &&
+    context.subscriptionStatus === "active" &&
+    context.currentPeriodEnd !== null &&
+    context.currentPeriodEnd.getTime() < Date.now();
+  const subscriptionStatus = isExpiredFreeTrial ? "expired" : context.subscriptionStatus ?? "active";
   const planId = subscriptionStatus === "active" || subscriptionStatus === "past_due" ? context.planId ?? "free" : "free";
 
   return {
@@ -84,12 +91,12 @@ export async function getSessionContext(): Promise<SessionContext> {
     email: context.email,
     subscriptionStatus,
     planId,
-    readOnlyMode: false,
+    readOnlyMode: isReadOnlyStatus(subscriptionStatus),
   };
 }
 
 export function isReadOnlyStatus(status: SubscriptionStatus) {
-  return false;
+  return status === "overdue" || status === "expired" || status === "canceled" || status === "paused";
 }
 
 export function assertRole(session: SessionContext, allowedRoles: Role[]) {

@@ -58,6 +58,11 @@ export async function POST(request: Request) {
   if (!session.salonId) {
     return NextResponse.json({ error: "No salon is attached to this account." }, { status: 403 });
   }
+
+  if (session.readOnlyMode) {
+    return NextResponse.json({ error: "Your free trial has ended. Upgrade to a plan to continue using all features.", upgradeRequired: true }, { status: 403 });
+  }
+
   const salonId = session.salonId;
 
   const body = await request.json().catch(() => null);

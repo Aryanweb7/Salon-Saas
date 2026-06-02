@@ -72,6 +72,7 @@ export function BillingClient({
   salonName: string;
 }) {
   const [customerId, setCustomerId] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -102,16 +103,55 @@ export function BillingClient({
     () => calculateInvoiceTotals({ items: normalizedItems, discountType, discountValue, taxRate }),
     [discountType, discountValue, normalizedItems, taxRate],
   );
+  const findExactCustomerByName = (name: string) => {
+    const normalizedName = name.trim().toLowerCase();
+
+    if (!normalizedName) {
+      return null;
+    }
+
+    return customers.find((customer) => customer.name.trim().toLowerCase() === normalizedName) ?? null;
+  };
+  const filteredCustomers = useMemo(() => {
+    const query = customerSearch.trim().toLowerCase();
+
+    if (!query) {
+      return customers;
+    }
+
+    return customers.filter((customer) =>
+      [customer.name, customer.phone, customer.email].some((value) => value.toLowerCase().includes(query)),
+    );
+  }, [customerSearch, customers]);
 
   const handleCustomerChange = (id: string) => {
     setCustomerId(id);
     const customer = customers.find((entry) => entry.id === id);
 
-    if (customer) {
-      setCustomerName(customer.name);
-      setCustomerPhone(customer.phone);
-      setCustomerEmail(customer.email);
+    if (!customer) {
+      return;
     }
+
+    setCustomerName(customer.name);
+    setCustomerPhone(customer.phone);
+    setCustomerEmail(customer.email);
+    setCustomerSearch(customer.name);
+  };
+
+  const handleCustomerNameChange = (value: string) => {
+    setCustomerName(value);
+    setCustomerSearch(value);
+
+    const matchedCustomer = findExactCustomerByName(value);
+
+    if (!matchedCustomer) {
+      setCustomerId("");
+      return;
+    }
+
+    setCustomerId(matchedCustomer.id);
+    setCustomerPhone(matchedCustomer.phone);
+    setCustomerEmail(matchedCustomer.email);
   };
 
   const updateItem = (index: number, patch: Partial<InvoiceItemDraft>) => {
@@ -132,6 +172,7 @@ export function BillingClient({
 
   const resetBill = () => {
     setCustomerId("");
+    setCustomerSearch("");
     setCustomerName("");
     setCustomerPhone("");
     setCustomerEmail("");
@@ -261,15 +302,24 @@ export function BillingClient({
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Existing customer</Label>
+              <Input
+                value={customerSearch}
+                onChange={(event) => {
+                  setCustomerSearch(event.target.value);
+                  setCustomerId("");
+                }}
+                placeholder="Search name, phone, or email"
+              />
               <select
                 className="h-11 w-full rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 text-sm"
                 value={customerId}
                 onChange={(event) => handleCustomerChange(event.target.value)}
               >
-                <option value="">Select customer</option>
-                {customers.map((customer) => (
+                <option value="">{filteredCustomers.length ? "Select customer" : "No customers found"}</option>
+                {filteredCustomers.map((customer) => (
                   <option key={customer.id} value={customer.id}>
                     {customer.name} - {customer.phone}
+                    {customer.email ? ` - ${customer.email}` : ""}
                   </option>
                 ))}
               </select>
@@ -290,7 +340,7 @@ export function BillingClient({
             </div>
             <div className="space-y-2">
               <Label>Customer name</Label>
-              <Input value={customerName} onChange={(event) => setCustomerName(event.target.value)} />
+              <Input value={customerName} onChange={(event) => handleCustomerNameChange(event.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Phone number</Label>

@@ -5,6 +5,7 @@ import { customers, invoiceItems, invoices } from "@/db/schema";
 import { calculateInvoiceTotals } from "@/lib/billing/calculations";
 import { generateInvoicePdf, readInvoicePdfAsBase64, type InvoicePdfData } from "@/lib/billing/pdf";
 import type { CreateInvoiceInput } from "@/lib/billing/validation";
+import { createVisit } from "@/lib/db/visits";
 import { sendInvoiceEmail } from "@/lib/email";
 
 export type InvoiceListFilters = {
@@ -119,6 +120,15 @@ function serializeInvoice(row: InvoiceRow, items: InvoiceItemRow[] = []): Serial
   };
 }
 
+function getVisitServiceName(items: SerializedInvoice["items"], invoiceNumber: string) {
+  const serviceNames = items
+    .filter((item) => item.kind === "service")
+    .map((item) => (item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name));
+  const name = serviceNames.length ? serviceNames.join(", ") : `Invoice ${invoiceNumber}`;
+
+  return name.length > 180 ? `${name.slice(0, 177)}...` : name;
+}
+
 async function getNextInvoiceNumber(salonId: string, date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -149,8 +159,33 @@ export async function createInvoiceForSalon(
 
   const invoiceNumber = await getNextInvoiceNumber(salonId);
   const invoiceDate = new Date();
-  const customerId = input.customerId || null;
+  let customerId = input.customerId || null;
   const customerEmail = input.customerEmail ?? "";
+
+  if (customerId) {
+    await db
+      .update(customers)
+      .set({
+        name: input.customerName,
+        phone: input.customerPhone,
+        email: customerEmail || null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(customers.id, customerId), eq(customers.salonId, salonId)));
+  } else {
+    const [createdCustomer] = await db
+      .insert(customers)
+      .values({
+        salonId,
+        name: input.customerName,
+        phone: input.customerPhone,
+        email: customerEmail || null,
+      })
+      .returning({ id: customers.id });
+
+    customerId = createdCustomer.id;
+  }
+
   const draftInvoice: SerializedInvoice = {
     id: "",
     invoiceNumber,
@@ -183,18 +218,6 @@ export async function createInvoiceForSalon(
     createdAt: invoiceDate.toISOString(),
   };
   const pdf = await generateInvoicePdf(toPdfData(draftInvoice));
-
-  if (customerId) {
-    await db
-      .update(customers)
-      .set({
-        name: input.customerName,
-        phone: input.customerPhone,
-        email: customerEmail || null,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(customers.id, customerId), eq(customers.salonId, salonId)));
-  }
 
   const [created] = await db
     .insert(invoices)
@@ -241,6 +264,15 @@ export async function createInvoiceForSalon(
     .returning();
 
   let invoice = serializeInvoice(created, insertedItems);
+
+  await createVisit(salonId, {
+    customerId,
+    services: [getVisitServiceName(invoice.items, invoice.invoiceNumber)],
+    amount: String(invoice.totalAmount),
+    paymentMethod: invoice.paymentMethod,
+    notes: `Auto-created from invoice ${invoice.invoiceNumber}`,
+    visitedAt: invoiceDate,
+  });
 
   if (invoice.paymentStatus === "paid" && customerEmail) {
     try {

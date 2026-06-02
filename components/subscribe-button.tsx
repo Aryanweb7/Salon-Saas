@@ -36,9 +36,11 @@ interface SubscribeButtonProps {
   planId: "basic" | "pro";
   isLoading?: boolean;
   className?: string;
+  label?: string;
+  redirectTo?: string;
 }
 
-export function SubscribeButton({ planId, isLoading = false, className }: SubscribeButtonProps) {
+export function SubscribeButton({ planId, isLoading = false, className, label, redirectTo = "/billing" }: SubscribeButtonProps) {
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -81,7 +83,7 @@ export function SubscribeButton({ planId, isLoading = false, className }: Subscr
 
             if (verifyResult.success) {
               toast.success(verifyResult.message ?? "Subscription updated successfully.");
-              window.location.href = "/billing";
+              window.location.href = redirectTo;
             } else {
               toast.error("Payment verification failed");
             }
@@ -104,7 +106,7 @@ export function SubscribeButton({ planId, isLoading = false, className }: Subscr
       disabled={isLoading || !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID}
       className={cn(className)}
     >
-      {planId === "pro" ? "Start Pro Plan" : "Subscribe Now"}
+      {label ?? (planId === "pro" ? "Start Pro Plan" : "Subscribe Now")}
     </Button>
   );
 }

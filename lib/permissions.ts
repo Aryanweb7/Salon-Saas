@@ -4,6 +4,10 @@ import { getSessionContext } from "@/lib/auth";
 export async function assertCanMutateWorkspace() {
   const session = await getSessionContext();
 
+  if (session.readOnlyMode) {
+    return { allowed: false, message: "Your free trial has ended. Upgrade to a plan to continue using all features.", session };
+  }
+
   return { allowed: true, message: null, session };
 }
 

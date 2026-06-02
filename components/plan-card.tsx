@@ -33,7 +33,7 @@ export function PlanCard({ planId }: { planId: keyof typeof PLAN_DEFINITIONS }) 
           <SubscribeButton planId={planId} className="w-full" />
         )}
         <p className="text-xs leading-5 text-[var(--muted-foreground)]">
-          {planId === "free" ? "Limited free plan for getting started." : "Monthly subscription. Cancel anytime."}
+          {planId === "free" ? "Full access for 1 month with unlimited usage." : "Monthly subscription. Cancel anytime."}
         </p>
       </div>
     </Card>
