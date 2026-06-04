@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     const feature = requireFeature(session.planId, "birthdayCampaigns");
 
     if (!feature.enabled) {
-      return NextResponse.json({ error: "Birthday-only campaigns are available on Pro.", upgradeRequired: true }, { status: 403 });
+      return NextResponse.json({ error: "Birthday-only campaigns are available on paid plans.", upgradeRequired: true }, { status: 403 });
     }
   }
 
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: `Monthly email campaign limit reached. Your ${PLAN_DEFINITIONS[session.planId].name} plan includes ${emailLimit} campaign sends per month.`,
-        upgradeRequired: session.planId === "free" || session.planId === "basic",
+        upgradeRequired: session.planId === "free",
       },
       { status: 403 },
     );

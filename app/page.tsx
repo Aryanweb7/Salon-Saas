@@ -33,7 +33,7 @@ const features = [
   {
     title: "Billing Plans",
     icon: CreditCard,
-    description: "Use Free, Basic, or Pro plans with Razorpay subscriptions for paid upgrades.",
+    description: "Use Free, Basic, or Annual plans with Razorpay subscriptions for paid upgrades.",
   },
   {
     title: "Reports",
@@ -43,7 +43,7 @@ const features = [
   {
     title: "Automated Email",
     icon: Mail,
-    description: "Send appointment confirmation emails and control monthly email usage by Free, Basic, and Pro plans.",
+    description: "Send appointment confirmation emails and control email usage by Free, Basic, and Annual plans.",
   },
 ];
 
@@ -79,9 +79,9 @@ export default function HomePage() {
             <Badge className="bg-[var(--foreground)]/8 text-[var(--foreground)]">Salon owner toolkit</Badge>
             <div className="grid gap-4 sm:grid-cols-2">
               {[
-                ["Plans", "Free, Basic, Pro"],
+                ["Plans", "Free, Basic, Annual"],
                 ["Customers", "Search + history"],
-                ["Emails", "5 / 10 / 20 monthly"],
+                ["Emails", "Unlimited trial / 20 paid"],
                 ["Billing", "Razorpay"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-2xl border border-[var(--border)] bg-white/40 p-4 sm:rounded-3xl">

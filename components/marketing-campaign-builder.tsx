@@ -97,7 +97,7 @@ export function MarketingCampaignBuilder({
   const selectedAudienceCount = selectedAudience?.count ?? 0;
   const remainingCampaignSends = emailLimit === null ? null : Math.max(emailLimit - campaignSendsThisMonth, 0);
   const limitReached = remainingCampaignSends !== null && remainingCampaignSends <= 0;
-  const shouldShowUpgradePrompt = planId === "free" || planId === "basic";
+  const shouldShowUpgradePrompt = planId === "free";
   const previewTitle = useMemo(() => renderPreview(title, salonName), [title, salonName]);
   const previewMessage = useMemo(() => renderPreview(message, salonName), [message, salonName]);
 
@@ -208,7 +208,7 @@ export function MarketingCampaignBuilder({
 
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {audienceStats.map((item) => {
-                const locked = item.id === "birthday" && planId !== "pro";
+                const locked = item.id === "birthday" && planId === "free";
 
                 return (
                   <button
@@ -227,7 +227,7 @@ export function MarketingCampaignBuilder({
                       <p className="break-words font-semibold">{item.label}</p>
                       <Badge>{item.count}</Badge>
                     </div>
-                    <p className="mt-2 text-sm text-[var(--muted-foreground)]">{locked ? "Birthday-only campaigns are available on Pro." : item.description}</p>
+                    <p className="mt-2 text-sm text-[var(--muted-foreground)]">{locked ? "Birthday-only campaigns are available on paid plans." : item.description}</p>
                   </button>
                 );
               })}

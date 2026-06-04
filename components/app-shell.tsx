@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getSessionContext } from "@/lib/auth";
+import { PLAN_DEFINITIONS } from "@/lib/plans";
 import { LogoutButton } from "@/components/logout-button";
 
 const ownerNav = [
@@ -38,13 +39,14 @@ export async function AppShell({
 }) {
   const session = await getSessionContext();
   const hasPaidPlan = session.planId !== "free";
+  const planName = PLAN_DEFINITIONS[session.planId].name;
 
   return (
     <div className="min-h-screen min-w-0 lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
       <MobileAppNav
         salonName={session.salonName ?? "Salon"}
         email={session.user?.email ?? session.email ?? ""}
-        planId={session.planId}
+        planName={planName}
         hasPaidPlan={hasPaidPlan}
       />
       <aside className="sticky top-0 hidden h-screen overflow-y-auto border-r border-[var(--border)] bg-[var(--background)] p-5 lg:block">
@@ -93,7 +95,7 @@ export async function AppShell({
             </div>
 
             <Badge className="w-fit" tone={hasPaidPlan ? "success" : "default"}>
-              Plan: {session.planId}
+              Plan: {planName}
             </Badge>
           </div>
 

@@ -14,7 +14,7 @@ export function PlanCard({ planId }: { planId: keyof typeof PLAN_DEFINITIONS }) 
       {plan.mostPopular ? <Badge className="w-fit sm:absolute sm:right-6 sm:top-6" tone="warning">Most Popular</Badge> : null}
       <div className="min-w-0">
         <h3 className="text-2xl font-semibold">{plan.name}</h3>
-        <p className="mt-2 break-words text-3xl font-bold sm:text-4xl">{formatCurrency(plan.price)}<span className="text-base font-normal text-[var(--muted-foreground)]">/month</span></p>
+        <p className="mt-2 break-words text-3xl font-bold sm:text-4xl">{formatCurrency(plan.price)}<span className="text-base font-normal text-[var(--muted-foreground)]">/{plan.billingInterval}</span></p>
       </div>
       <ul className="space-y-3 text-sm text-[var(--muted-foreground)]">
         <li className="flex gap-3"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" /> <span>{plan.staffLimit ?? "Unlimited"} staff users</span></li>
@@ -33,7 +33,7 @@ export function PlanCard({ planId }: { planId: keyof typeof PLAN_DEFINITIONS }) 
           <SubscribeButton planId={planId} className="w-full" />
         )}
         <p className="text-xs leading-5 text-[var(--muted-foreground)]">
-          {planId === "free" ? "Full access for 1 month with unlimited usage." : "Monthly subscription. Cancel anytime."}
+          {planId === "free" ? "Full access for 1 month with unlimited usage." : `${plan.billingInterval === "year" ? "Annual" : "Monthly"} subscription. Cancel anytime.`}
         </p>
       </div>
     </Card>

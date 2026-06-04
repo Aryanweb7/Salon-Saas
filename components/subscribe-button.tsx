@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { initiateSubscriptionAction, verifySubscriptionPaymentAction } from "@/app/actions/subscriptions";
 import { Button } from "@/components/ui/button";
+import { PLAN_DEFINITIONS } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -41,6 +42,8 @@ interface SubscribeButtonProps {
 }
 
 export function SubscribeButton({ planId, isLoading = false, className, label, redirectTo = "/billing" }: SubscribeButtonProps) {
+  const plan = PLAN_DEFINITIONS[planId];
+
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -65,7 +68,7 @@ export function SubscribeButton({ planId, isLoading = false, className, label, r
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
         subscription_id: result.subscriptionId,
         name: "SalonFlow",
-        description: `${planId.toUpperCase()} plan - monthly auto-renewal`,
+        description: `${plan.name} plan - ${plan.billingInterval === "year" ? "annual" : "monthly"} auto-renewal`,
         prefill: {
           name: result.salonName,
           email: result.email,
@@ -106,7 +109,7 @@ export function SubscribeButton({ planId, isLoading = false, className, label, r
       disabled={isLoading || !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID}
       className={cn(className)}
     >
-      {label ?? (planId === "pro" ? "Start Pro Plan" : "Subscribe Now")}
+      {label ?? (planId === "pro" ? "Start Annual Plan" : "Subscribe Now")}
     </Button>
   );
 }

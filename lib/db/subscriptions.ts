@@ -171,12 +171,14 @@ export async function updateSubscriptionFromRazorpay(params: {
       return { success: false };
     }
 
+    const paidPeriodEnd = subscription.planId === "pro" ? sql`now() + interval '1 year'` : sql`now() + interval '30 day'`;
+
     await db
       .update(subscriptions)
       .set({
         status: params.status,
         currentPeriodStart: params.status === "active" ? new Date() : undefined,
-        currentPeriodEnd: params.status === "active" ? sql`now() + interval '30 day'` : undefined,
+        currentPeriodEnd: params.status === "active" ? paidPeriodEnd : undefined,
         updatedAt: new Date(),
       })
       .where(eq(subscriptions.id, subscription.id));
@@ -190,7 +192,7 @@ export async function updateSubscriptionFromRazorpay(params: {
           status: params.status,
           planId: subscription.planId,
           readOnlyMode: false,
-          nextBillingDate: params.status === "active" ? sql`now() + interval '30 day'` : undefined,
+          nextBillingDate: params.status === "active" ? paidPeriodEnd : undefined,
           updatedAt: new Date(),
         })
         .where(eq(salons.id, subscription.salonId));
@@ -225,7 +227,7 @@ export async function updateSubscriptionStatusFromPayment(params: {
   razorpaySubscriptionId?: string;
 }) {
   const [subscription] = await db
-    .select({ id: subscriptions.id, salonId: subscriptions.salonId })
+    .select({ id: subscriptions.id, salonId: subscriptions.salonId, planId: subscriptions.planId })
     .from(subscriptions)
     .where(
       params.razorpaySubscriptionId
@@ -240,13 +242,14 @@ export async function updateSubscriptionStatusFromPayment(params: {
   }
 
   const salonId = subscription.salonId ?? params.salonId;
+  const paidPeriodEnd = subscription.planId === "pro" ? sql`now() + interval '1 year'` : sql`now() + interval '30 day'`;
 
   await db
     .update(subscriptions)
     .set({
       status: params.status,
       currentPeriodStart: params.status === "active" ? new Date() : undefined,
-      currentPeriodEnd: params.status === "active" ? sql`now() + interval '30 day'` : undefined,
+      currentPeriodEnd: params.status === "active" ? paidPeriodEnd : undefined,
       graceEndsAt: params.status === "past_due" ? sql`now() + interval '3 day'` : params.status === "active" ? null : undefined,
       canceledAt: params.status === "canceled" ? new Date() : undefined,
       updatedAt: new Date(),
@@ -268,7 +271,7 @@ export async function updateSubscriptionStatusFromPayment(params: {
         status: params.status,
         planId: params.status === "active" ? updatedSubscription?.planId : undefined,
         readOnlyMode: false,
-        nextBillingDate: params.status === "active" ? sql`now() + interval '30 day'` : null,
+        nextBillingDate: params.status === "active" ? paidPeriodEnd : null,
         updatedAt: new Date(),
       })
       .where(eq(salons.id, salonId));

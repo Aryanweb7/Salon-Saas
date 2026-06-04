@@ -45,12 +45,12 @@ const mobileNav = [
 export function MobileAppNav({
   salonName,
   email,
-  planId,
+  planName,
   hasPaidPlan,
 }: {
   salonName: string;
   email: string;
-  planId: string;
+  planName: string;
   hasPaidPlan: boolean;
 }) {
   const pathname = usePathname();
@@ -115,7 +115,7 @@ export function MobileAppNav({
                   <p className="truncate text-xs text-[var(--muted-foreground)]">{email}</p>
                 </div>
                 <Badge className="w-fit" tone={hasPaidPlan ? "success" : "default"}>
-                  Plan: {planId}
+                  Plan: {planName}
                 </Badge>
                 <LogoutButton className="h-11 w-full" />
               </div>

@@ -48,9 +48,13 @@ export function getRazorpayClient() {
 }
 
 export function getPlanSubscriptionPayload(planId: "basic" | "pro") {
+  if (planId === "pro" && !process.env.RAZORPAY_ANNUAL_PLAN_ID) {
+    throw new Error("Missing RAZORPAY_ANNUAL_PLAN_ID");
+  }
+
   return {
-    basic: { planId: "plan_SiuCLoUSjpJsbe", amount: 99900 },
-    pro: { planId: "plan_SiuDiPMGIpOtzR", amount: 199900 },
+    basic: { planId: "plan_SiuCLoUSjpJsbe", amount: 99900, totalCount: 12 },
+    pro: { planId: process.env.RAZORPAY_ANNUAL_PLAN_ID as string, amount: 999900, totalCount: 1 },
   }[planId];
 }
 

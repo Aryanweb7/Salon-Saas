@@ -23,6 +23,7 @@ export interface PlanDefinition {
   id: PlanId;
   name: string;
   price: number;
+  billingInterval: "month" | "year";
   staffLimit: number | null;
   customerLimit: number | null;
   reminderLimit: number | null;

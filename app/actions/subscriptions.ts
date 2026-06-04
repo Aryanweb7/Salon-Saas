@@ -32,7 +32,7 @@ export async function initiateSubscriptionAction(data: SubscribeFormData) {
     const planConfig = getPlanSubscriptionPayload(validated.planId);
     const subscriptionPayload = {
       plan_id: planConfig.planId,
-      total_count: 12,
+      total_count: planConfig.totalCount,
       quantity: 1,
       customer_notify: 1 as const,
       notes: {

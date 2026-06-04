@@ -24,10 +24,10 @@ const planBenefits: Record<PlanId, string[]> = {
     "All feature modules enabled",
   ],
   basic: [
-    "5 staff users",
-    "500 customers per month",
+    "10 staff users",
+    "Unlimited customers",
     "Advanced reports and commissions",
-    "100 reminders per month",
+    "Birthday campaigns",
   ],
   pro: [
     "10 staff users",
@@ -92,7 +92,7 @@ export function SubscriptionSettings({
             <div className="rounded-lg border border-[var(--border)] p-3">
               <div className="flex items-center gap-2 text-[var(--muted-foreground)]">
                 <CreditCard className="h-4 w-4" />
-                Monthly price
+                {currentPlan.billingInterval === "year" ? "Annual price" : "Monthly price"}
               </div>
               <p className="mt-2 font-semibold">{formatCurrency(currentPlan.price)}</p>
             </div>
@@ -124,7 +124,7 @@ export function SubscriptionSettings({
                     </div>
                     <p className="mt-1 text-2xl font-bold">
                       {formatCurrency(plan.price)}
-                      <span className="text-sm font-normal text-[var(--muted-foreground)]">/month</span>
+                      <span className="text-sm font-normal text-[var(--muted-foreground)]">/{plan.billingInterval}</span>
                     </p>
                   </div>
                   {isCurrent ? <Badge tone="success">Active</Badge> : plan.mostPopular ? <Badge tone="warning">Popular</Badge> : null}

@@ -24,6 +24,6 @@ export function checkPlanLimit(planId: PlanId, usage: UsageSnapshot) {
 export function requireFeature(planId: PlanId, feature: FeatureKey) {
   return {
     enabled: canUseFeature(planId, feature),
-    message: canUseFeature(planId, feature) ? null : `Upgrade to Pro to unlock ${feature}.`,
+    message: canUseFeature(planId, feature) ? null : `Upgrade to a paid plan to unlock ${feature}.`,
   };
 }
