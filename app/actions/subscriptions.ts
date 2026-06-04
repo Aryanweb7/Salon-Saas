@@ -15,8 +15,39 @@ const subscribeSchema = z.object({
 
 export type SubscribeFormData = z.infer<typeof subscribeSchema>;
 
+function getRazorpayErrorDescription(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return null;
+  }
+
+  const razorpayError = error as {
+    description?: unknown;
+    message?: unknown;
+    error?: {
+      code?: unknown;
+      description?: unknown;
+      reason?: unknown;
+      field?: unknown;
+    };
+  };
+  const description = razorpayError.error?.description ?? razorpayError.description;
+  const code = razorpayError.error?.code;
+  const reason = razorpayError.error?.reason;
+
+  if (typeof description === "string" && description.trim()) {
+    return [code, description, reason].filter((value) => typeof value === "string" && value.trim()).join(": ");
+  }
+
+  if (typeof razorpayError.message === "string" && razorpayError.message.trim()) {
+    return razorpayError.message;
+  }
+
+  return null;
+}
+
 function getSubscriptionErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : "";
+  const razorpayDescription = getRazorpayErrorDescription(error);
 
   if (message.includes("Missing Razorpay credentials")) {
     return "Razorpay credentials are not configured in this deployment.";
@@ -32,6 +63,10 @@ function getSubscriptionErrorMessage(error: unknown) {
 
   if (message.includes("Failed to create subscription")) {
     return "Subscription was created with Razorpay, but could not be saved. Please contact support.";
+  }
+
+  if (razorpayDescription) {
+    return `Razorpay error: ${razorpayDescription}`;
   }
 
   return "Failed to initiate subscription";
