@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { initiateSubscriptionAction, verifySubscriptionPaymentAction } from "@/app/actions/subscriptions";
 import { Button } from "@/components/ui/button";
 import { PLAN_DEFINITIONS } from "@/lib/plans";
@@ -24,7 +24,7 @@ interface RazorpayOptions {
 
 declare global {
   interface Window {
-    Razorpay: {
+    Razorpay?: {
       new (options: RazorpayOptions): {
         open: () => void;
         close: () => void;
@@ -41,22 +41,63 @@ interface SubscribeButtonProps {
   redirectTo?: string;
 }
 
-export function SubscribeButton({ planId, isLoading = false, className, label, redirectTo = "/billing" }: SubscribeButtonProps) {
-  const plan = PLAN_DEFINITIONS[planId];
+function loadRazorpayCheckout() {
+  if (window.Razorpay) {
+    return Promise.resolve(true);
+  }
 
-  useEffect(() => {
+  const existingScript = document.querySelector<HTMLScriptElement>('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+
+  if (existingScript) {
+    return new Promise<boolean>((resolve) => {
+      existingScript.addEventListener("load", () => resolve(Boolean(window.Razorpay)), { once: true });
+      existingScript.addEventListener("error", () => resolve(false), { once: true });
+    });
+  }
+
+  return new Promise<boolean>((resolve) => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
+    script.onload = () => resolve(Boolean(window.Razorpay));
+    script.onerror = () => resolve(false);
     document.body.appendChild(script);
+  });
+}
+
+export function SubscribeButton({ planId, isLoading = false, className, label, redirectTo = "/billing" }: SubscribeButtonProps) {
+  const plan = PLAN_DEFINITIONS[planId];
+  const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+  const [isCheckoutReady, setIsCheckoutReady] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    loadRazorpayCheckout().then((ready) => {
+      if (isMounted) {
+        setIsCheckoutReady(ready);
+      }
+    });
 
     return () => {
-      document.body.removeChild(script);
+      isMounted = false;
     };
   }, []);
 
   const handleSubscribe = async () => {
     try {
+      if (!razorpayKey) {
+        toast.error("Razorpay public key is not configured in this deployment.");
+        return;
+      }
+
+      const checkoutReady = isCheckoutReady || await loadRazorpayCheckout();
+
+      if (!checkoutReady || !window.Razorpay) {
+        toast.error("Razorpay checkout could not be loaded. Please refresh and try again.");
+        return;
+      }
+
       const result = await initiateSubscriptionAction({ planId });
 
       if (!result.success || !result.subscriptionId || !result.salonName || !result.email || !result.planId) {
@@ -65,7 +106,7 @@ export function SubscribeButton({ planId, isLoading = false, className, label, r
       }
 
       const options: RazorpayOptions = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+        key: razorpayKey,
         subscription_id: result.subscriptionId,
         name: "SalonFlow",
         description: `${plan.name} plan - ${plan.billingInterval === "year" ? "annual" : "monthly"} auto-renewal`,
@@ -106,7 +147,7 @@ export function SubscribeButton({ planId, isLoading = false, className, label, r
   return (
     <Button 
       onClick={handleSubscribe} 
-      disabled={isLoading || !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID}
+      disabled={isLoading || !razorpayKey}
       className={cn(className)}
     >
       {label ?? (planId === "pro" ? "Start Annual Plan" : "Subscribe Now")}
