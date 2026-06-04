@@ -15,6 +15,28 @@ const subscribeSchema = z.object({
 
 export type SubscribeFormData = z.infer<typeof subscribeSchema>;
 
+function getSubscriptionErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : "";
+
+  if (message.includes("Missing Razorpay credentials")) {
+    return "Razorpay credentials are not configured in this deployment.";
+  }
+
+  if (message.includes("Missing RAZORPAY_ANNUAL_PLAN_ID")) {
+    return "Annual Razorpay plan id is not configured in this deployment.";
+  }
+
+  if (message.includes("DATABASE_URL")) {
+    return "Database connection is not configured in this deployment.";
+  }
+
+  if (message.includes("Failed to create subscription")) {
+    return "Subscription was created with Razorpay, but could not be saved. Please contact support.";
+  }
+
+  return "Failed to initiate subscription";
+}
+
 export async function initiateSubscriptionAction(data: SubscribeFormData) {
   const session = await getSessionContext();
 
@@ -61,7 +83,8 @@ export async function initiateSubscriptionAction(data: SubscribeFormData) {
       planId: validated.planId,
     };
   } catch (error) {
-    return { success: false, error: "Failed to initiate subscription" };
+    console.error("Failed to initiate subscription", error);
+    return { success: false, error: getSubscriptionErrorMessage(error) };
   }
 }
 
