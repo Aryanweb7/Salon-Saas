@@ -13,7 +13,7 @@ export function PlanCard({ planId }: { planId: keyof typeof PLAN_DEFINITIONS }) 
     <Card className="relative flex h-full flex-col gap-5">
       {plan.mostPopular ? <Badge className="w-fit sm:absolute sm:right-6 sm:top-6" tone="warning">Most Popular</Badge> : null}
       <div className="min-w-0">
-        <h3 className="text-2xl font-semibold">{plan.name}</h3>
+        <h3 className="whitespace-nowrap text-2xl font-semibold">{plan.name}</h3>
         <p className="mt-2 break-words text-3xl font-bold sm:text-4xl">{formatCurrency(plan.price)}<span className="text-base font-normal text-[var(--muted-foreground)]">/{plan.billingInterval}</span></p>
       </div>
       <ul className="space-y-3 text-sm text-[var(--muted-foreground)]">

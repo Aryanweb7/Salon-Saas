@@ -83,7 +83,7 @@ export function SubscriptionSettings({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <CardDescription>Current subscription</CardDescription>
-              <CardTitle className="mt-1">{currentPlan.name}</CardTitle>
+              <CardTitle className="mt-1 whitespace-nowrap">{currentPlan.name}</CardTitle>
             </div>
             <Badge tone={getStatusTone(status)}>{status.replace("_", " ")}</Badge>
           </div>
@@ -120,7 +120,7 @@ export function SubscriptionSettings({
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       {plan.mostPopular ? <Sparkles className="h-4 w-4 text-[var(--accent)]" /> : null}
-                      <CardTitle>{plan.name}</CardTitle>
+                      <CardTitle className="whitespace-nowrap">{plan.name}</CardTitle>
                     </div>
                     <p className="mt-1 text-2xl font-bold">
                       {formatCurrency(plan.price)}
